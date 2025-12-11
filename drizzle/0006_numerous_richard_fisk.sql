@@ -1,0 +1,1 @@
+ALTER TABLE `notifications` MODIFY COLUMN `type` enum('ewa_approved','ewa_rejected','ewa_disbursed','treepoints_received','treepoints_redeemed','goal_progress','goal_completed','fwi_improved','fwi_alert','level_up','streak_milestone','offer_available','system_announcement','security_alert','referral_bonus') NOT NULL;
