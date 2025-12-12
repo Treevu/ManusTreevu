@@ -7,7 +7,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { serveStatic, setupVite } from "./vite";
+import { setupFrontend, setupVite } from "./vite";
 import { startAlertCron, stopAlertCron } from "../jobs/alertCron";
 import { initializeWebSocket } from "../services/websocket";
 import { logger, requestLogger } from "./logger";
@@ -88,12 +88,7 @@ async function startServer() {
     })
   );
   
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  await setupFrontend(app, server);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
