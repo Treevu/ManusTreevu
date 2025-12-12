@@ -1,8 +1,8 @@
 import express, { type Express } from "express";
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
-import path from "path";
 import { createServer as createViteServer } from "vite";
 import { fileURLToPath } from "url";
 
@@ -65,24 +65,23 @@ export async function setupVite(app: Express, server: Server) {
  * Expects: dist/public (from your Vite build output).
  */
 export function serveStatic(app: Express) {
-  // In production, we should serve the client build output.
-  // Your build script produces: vite build -> dist/public (per your existing logic).
-  const distPath = path.resolve(__dirname, "../..", "dist", "public");
+  // In Railway, cwd is usually /app (where package.json lives)
+  const distPath = path.resolve(process.cwd(), "dist", "public");
 
   if (!fs.existsSync(distPath)) {
-    // Fail fast but with a helpful message
     console.error(
-      `[serveStatic] Could not find build directory: ${distPath}\n` +
-        `Make sure you build the client before starting the server.\n` +
-        `Expected files like: ${path.join(distPath, "index.html")}`
+      `[serveStatic] Build folder not found: ${distPath}\n` +
+        `Did you run "pnpm build" and is Vite outputting to dist/public?`
     );
+  } else {
+    console.log(`[serveStatic] Serving static from: ${distPath}`);
   }
 
   app.use(express.static(distPath));
 
-  // SPA fallback to index.html
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexHtml = path.join(distPath, "index.html");
+    res.sendFile(indexHtml);
   });
 }
 
