@@ -9,16 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Loader2, ArrowLeft, Store, TrendingUp, Gift, 
-  Plus, Sparkles, Target, BarChart3, Percent, Settings
+  Plus, Sparkles, Target, BarChart3, Percent, Settings, QrCode
 } from "lucide-react";
 import NotificationCenter from "@/components/NotificationCenter";
 import ThemeToggle from "@/components/ThemeToggle";
+import { SmartOfferGenerator } from "@/components/dashboard/SmartOfferGenerator";
+import { ROICalculator } from "@/components/dashboard/ROICalculator";
+import { ProgressiveDisclosure, MERCHANT_EDUCATION_STEPS } from "@/components/dashboard/ProgressiveDisclosure";
+import { EducationGamification } from "@/components/EducationGamification";
+import { allTutorials } from "@/lib/educationalContent";
 import { Link } from "wouter";
 import { useState } from "react";
+import { CouponValidator } from "@/components/CouponValidator";
 import { toast } from "sonner";
 
 export default function MerchantDashboard() {
   const { user } = useAuth();
+  const [showMerchantEducation, setShowMerchantEducation] = useState(false);
   const [newOffer, setNewOffer] = useState<{
     title: string;
     description: string;
@@ -130,7 +137,14 @@ export default function MerchantDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Ofertas Activas</p>
+                  <p className="text-sm text-gray-400 flex items-center gap-1">
+                    Ofertas Activas
+                    <EducationGamification
+                      tutorialType="merchant"
+                      steps={allTutorials.merchant.marketplace.basic.steps}
+                      onComplete={() => toast.success('¡Felicidades! Has ganado 100 TreePoints por completar el tutorial del Marketplace')}
+                    />
+                  </p>
                   <p className="text-3xl font-bold text-segment-comercio">{stats?.activeOffers || 0}</p>
                 </div>
                 <Gift className="h-8 w-8 text-segment-comercio" />
@@ -175,12 +189,33 @@ export default function MerchantDashboard() {
           </Card>
         </div>
 
+        {/* Herramientas Premium de Comercio */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <SmartOfferGenerator 
+            onCreateOffer={(offer) => {
+              console.log('Creating offer:', offer);
+              toast.success(`Campaña "${offer.title}" creada con ${offer.discount}% de descuento`);
+            }}
+          />
+          <ROICalculator 
+            currentROI={3.8}
+            totalRedemptions={stats?.totalRedemptions || 0}
+            totalRevenue={45680}
+          />
+        </div>
+
         <Tabs defaultValue="offers" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md bg-treevu-surface/50 border border-white/10">
+          <TabsList className="grid grid-cols-4 w-full max-w-lg bg-treevu-surface/50 border border-white/10">
             <TabsTrigger value="offers">Mis Ofertas</TabsTrigger>
+            <TabsTrigger value="validate">Validar QR</TabsTrigger>
             <TabsTrigger value="create">Crear Oferta</TabsTrigger>
             <TabsTrigger value="analytics">Analítica</TabsTrigger>
           </TabsList>
+
+          {/* Validate QR Tab */}
+          <TabsContent value="validate" className="space-y-4">
+            <CouponValidator />
+          </TabsContent>
 
           {/* Offers Tab */}
           <TabsContent value="offers" className="space-y-4">
@@ -456,6 +491,16 @@ export default function MerchantDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Merchant Education Modal */}
+      <ProgressiveDisclosure
+        isOpen={showMerchantEducation}
+        onClose={() => setShowMerchantEducation(false)}
+        title="Marketplace Treevü"
+        description="Aprende a maximizar tus ventas con el marketplace de Treevü"
+        steps={MERCHANT_EDUCATION_STEPS}
+        onComplete={() => toast.success('¡Excelente! Ya conoces todas las funcionalidades del marketplace')}
+      />
     </div>
   );
 }

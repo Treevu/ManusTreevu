@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9e1d1105-5b7f-4578-af73-a70370a654e4",
+  "id": "13560695-a184-40b1-b6b0-46db99293e89",
   "prevId": "0c395ed4-ceff-461c-a4e4-27a06929faa6",
   "tables": {
     "achievements": {

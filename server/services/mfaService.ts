@@ -31,7 +31,6 @@ export function verifyToken(secret: string, token: string): boolean {
 export function generateBackupCodes(count: number = 8): string[] {
   const codes: string[] = [];
   for (let i = 0; i < count; i++) {
-    // Generate 8-character alphanumeric codes
     const code = crypto.randomBytes(4).toString('hex').toUpperCase();
     codes.push(code);
   }
@@ -43,7 +42,7 @@ export function hashBackupCode(code: string): string {
   return crypto.createHash('sha256').update(code.toUpperCase()).digest('hex');
 }
 
-// Setup MFA for a user (generate secret and QR code)
+// Setup MFA for a user
 export async function setupMFA(userId: number): Promise<{
   secret: string;
   qrCode: string;
@@ -52,11 +51,9 @@ export async function setupMFA(userId: number): Promise<{
   const db = await getDb();
   if (!db) return null;
 
-  // Get user email
   const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user.length || !user[0].email) return null;
 
-  // Check if MFA already exists
   const existing = await db.select().from(mfaSettings).where(eq(mfaSettings.userId, userId)).limit(1);
   
   const secret = generateSecret();
@@ -65,7 +62,6 @@ export async function setupMFA(userId: number): Promise<{
   const hashedBackupCodes = backupCodes.map(hashBackupCode);
 
   if (existing.length) {
-    // Update existing (reset)
     await db.update(mfaSettings).set({
       secret,
       enabled: false,
@@ -75,7 +71,6 @@ export async function setupMFA(userId: number): Promise<{
       updatedAt: new Date(),
     }).where(eq(mfaSettings.userId, userId));
   } else {
-    // Create new
     await db.insert(mfaSettings).values({
       userId,
       secret,
@@ -116,21 +111,16 @@ export async function verifyMFAToken(userId: number, token: string): Promise<boo
   const mfa = await db.select().from(mfaSettings).where(eq(mfaSettings.userId, userId)).limit(1);
   if (!mfa.length || !mfa[0].enabled) return false;
 
-  // First try TOTP
   if (verifyToken(mfa[0].secret, token)) {
-    await db.update(mfaSettings).set({
-      lastUsedAt: new Date(),
-    }).where(eq(mfaSettings.userId, userId));
+    await db.update(mfaSettings).set({ lastUsedAt: new Date() }).where(eq(mfaSettings.userId, userId));
     return true;
   }
 
-  // Then try backup codes
   const hashedToken = hashBackupCode(token);
   const backupCodes: string[] = mfa[0].backupCodes ? JSON.parse(mfa[0].backupCodes) : [];
   const codeIndex = backupCodes.indexOf(hashedToken);
   
   if (codeIndex !== -1) {
-    // Remove used backup code
     backupCodes.splice(codeIndex, 1);
     await db.update(mfaSettings).set({
       backupCodes: JSON.stringify(backupCodes),
@@ -143,7 +133,7 @@ export async function verifyMFAToken(userId: number, token: string): Promise<boo
   return false;
 }
 
-// Disable MFA (requires valid token)
+// Disable MFA
 export async function disableMFA(userId: number, token: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
@@ -151,7 +141,6 @@ export async function disableMFA(userId: number, token: string): Promise<boolean
   const mfa = await db.select().from(mfaSettings).where(eq(mfaSettings.userId, userId)).limit(1);
   if (!mfa.length || !mfa[0].enabled) return false;
 
-  // Verify token before disabling
   if (!verifyToken(mfa[0].secret, token)) return false;
 
   await db.update(mfaSettings).set({
@@ -171,7 +160,7 @@ export async function isMFAEnabled(userId: number): Promise<boolean> {
   return mfa.length > 0 && mfa[0].enabled;
 }
 
-// Get MFA status for a user
+// Get MFA status
 export async function getMFAStatus(userId: number): Promise<{
   enabled: boolean;
   verifiedAt: Date | null;
@@ -202,7 +191,6 @@ export async function regenerateBackupCodes(userId: number, token: string): Prom
   const mfa = await db.select().from(mfaSettings).where(eq(mfaSettings.userId, userId)).limit(1);
   if (!mfa.length || !mfa[0].enabled) return null;
 
-  // Verify token before regenerating
   if (!verifyToken(mfa[0].secret, token)) return null;
 
   const newBackupCodes = generateBackupCodes();

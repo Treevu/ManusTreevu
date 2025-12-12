@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Leaf } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,10 +35,10 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks = [
-    { name: 'Soluciones', href: '#solutions' },
-    { name: 'Demos', href: '/demos', isExternal: true },
-    { name: 'Precios', href: '#pricing' },
-    { name: 'Partners', href: '#founders-offer' },
+    { name: t('nav.solutions'), href: '#solutions' },
+    { name: t('nav.demos'), href: '/demos', isExternal: true },
+    { name: t('nav.pricing'), href: '#pricing' },
+    { name: t('nav.partners'), href: '#founders-offer' },
   ];
 
   return (
@@ -86,12 +89,13 @@ const Navbar: React.FC = () => {
                 </a>
               )
             ))}
+            <LanguageSwitcher variant="minimal" />
             <a 
               href="#roi-calculator"
               onClick={(e) => scrollToSection(e, '#roi-calculator')}
               className="bg-brand-primary hover:bg-brand-secondary text-treevu-base px-6 py-2.5 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] text-sm cursor-pointer whitespace-nowrap"
             >
-              Calcular ROI
+              {t('nav.calculateRoi')}
             </a>
           </div>
 
@@ -137,8 +141,11 @@ const Navbar: React.FC = () => {
                 onClick={(e) => scrollToSection(e, '#roi-calculator')}
                 className="block w-full text-center bg-brand-primary text-treevu-base px-4 py-3 rounded-lg font-bold hover:bg-brand-secondary transition-colors cursor-pointer"
                 >
-                Calcular ROI
+                {t('nav.calculateRoi')}
                 </a>
+              <div className="mt-4 flex justify-center">
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         </div>

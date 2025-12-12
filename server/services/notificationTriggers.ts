@@ -488,3 +488,76 @@ export async function triggerSystemAnnouncement(
     metadata: {},
   });
 }
+
+
+/**
+ * Trigger: Badge Earned
+ */
+export async function triggerBadgeEarned(
+  userId: number,
+  badgeName: string,
+  pointsAwarded: number
+): Promise<void> {
+  await sendNotification({
+    userId,
+    type: 'level_up',
+    title: '🏆 ¡Nueva Insignia!',
+    message: `Has obtenido la insignia "${badgeName}"${pointsAwarded > 0 ? ` y ganado ${pointsAwarded} TreePoints` : ''}.`,
+    icon: 'Award',
+    actionUrl: '/profile/badges',
+    actionLabel: 'Ver insignias',
+    metadata: { badgeName, pointsAwarded },
+  });
+}
+
+/**
+ * Trigger: Tutorial Completed
+ */
+export async function triggerTutorialCompleted(
+  userId: number,
+  tutorialName: string,
+  pointsAwarded: number
+): Promise<void> {
+  await sendNotification({
+    userId,
+    type: 'treepoints_received',
+    title: '📚 ¡Tutorial Completado!',
+    message: `Has completado "${tutorialName}" y ganado ${pointsAwarded} TreePoints.`,
+    icon: 'GraduationCap',
+    actionUrl: '/dashboard/employee',
+    actionLabel: 'Seguir aprendiendo',
+    metadata: { tutorialName, pointsAwarded },
+  });
+}
+
+/**
+ * Trigger: Leaderboard Position Change
+ */
+export async function triggerLeaderboardChange(
+  userId: number,
+  newPosition: number,
+  previousPosition: number,
+  leaderboardType: 'points' | 'fwi' | 'level'
+): Promise<void> {
+  const improved = newPosition < previousPosition;
+  const change = Math.abs(previousPosition - newPosition);
+  
+  const typeNames = {
+    points: 'TreePoints',
+    fwi: 'FWI Score',
+    level: 'Nivel',
+  };
+  
+  await sendNotification({
+    userId,
+    type: 'level_up',
+    title: improved ? `📈 ¡Subiste en el ranking!` : `📉 Cambio en el ranking`,
+    message: improved 
+      ? `Ahora estás en el puesto #${newPosition} del ranking de ${typeNames[leaderboardType]}. ¡Subiste ${change} posiciones!`
+      : `Bajaste al puesto #${newPosition} del ranking de ${typeNames[leaderboardType]}.`,
+    icon: improved ? 'TrendingUp' : 'TrendingDown',
+    actionUrl: '/leaderboard',
+    actionLabel: 'Ver ranking',
+    metadata: { newPosition, previousPosition, leaderboardType, improved },
+  });
+}

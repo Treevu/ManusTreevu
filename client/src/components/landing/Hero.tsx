@@ -1,5 +1,8 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useTypewriter } from '@/hooks/useTypewriter';
+import { VideoModal } from '@/components/VideoModal';
 import { Link } from 'wouter';
 import { 
   ArrowRight, 
@@ -11,13 +14,35 @@ import {
   MessageSquare,
   Shield,
   Lock,
-  FileCheck
+  FileCheck,
+  Play
 } from 'lucide-react';
 
 type DashboardView = 'PERSONA' | 'EMPRESA' | 'COMERCIO';
 
 const Hero: React.FC = () => {
+  const { t } = useTranslation();
   const [activeView, setActiveView] = useState<DashboardView>('PERSONA');
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  
+  // Typewriter animation for the main title - using translations
+  const { displayText: brandText, cursorVisible: brandCursor, isComplete: brandComplete } = useTypewriter({
+    text: t('hero.brand'),
+    speed: 120,
+    delay: 500,
+  });
+  
+  const { displayText: systemText, cursorVisible: systemCursor, isComplete: systemComplete } = useTypewriter({
+    text: t('hero.system'),
+    speed: 80,
+    delay: 1400,
+  });
+  
+  const { displayText: operativeText, cursorVisible: operativeCursor, isComplete: operativeComplete } = useTypewriter({
+    text: t('hero.operative'),
+    speed: 80,
+    delay: 2400,
+  });
   
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -62,22 +87,37 @@ const Hero: React.FC = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
             </span>
-            Nueva Tecnología OCR 2.0 con Treevü Vision Engine™
+            {t('hero.badge')}
           </div>
           
-          {/* Main Headline - Enhanced Drop Shadow for Contrast */}
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-extrabold text-white tracking-tighter mb-6 leading-[0.9] drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
-            El Sistema <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">Operativo</span>
+          {/* Main Headline with Typewriter Animation */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold text-white tracking-tighter mb-6 leading-[0.9] drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] min-h-[1.8em] md:min-h-[2.2em]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-emerald-300">
+              {brandText}
+              {!brandComplete && brandCursor && <span className="text-brand-primary animate-pulse">|</span>}
+            </span>
+            {brandComplete && (
+              <>
+                {' '}{systemText}
+                {!systemComplete && systemCursor && <span className="text-white animate-pulse">|</span>}
+              </>
+            )}
+            {systemComplete && <br/>}
+            {systemComplete && (
+              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+                {operativeText}
+                {!operativeComplete && operativeCursor && <span className="text-gray-400 animate-pulse">|</span>}
+              </span>
+            )}
           </h1>
 
           {/* Secondary Slogan */}
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-8 bg-gradient-to-r from-brand-primary via-white to-segment-empresa bg-clip-text text-transparent tracking-wide animate-fade-in-up">
-            Inteligencia Artificial para el Bienestar Financiero
+            {t('hero.slogan')}
           </h2>
           
           <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Transformamos un proceso transaccional estático en un <span className="text-brand-primary font-semibold">activo de datos dinámico</span>. Sin tocar tu flujo de caja, sin riesgo de balance.
+            {t('hero.description').split('<1>')[0]}<span className="text-brand-primary font-semibold">{t('hero.dynamicAsset')}</span>{t('hero.description').split('</1>')[1] || '. Sin tocar tu flujo de caja, sin riesgo de balance.'}
           </p>
           
           {/* CTAs */}
@@ -88,7 +128,7 @@ const Hero: React.FC = () => {
               aria-label="Ir a la calculadora de ROI y agendar demostración"
               className="px-8 py-4 bg-gradient-to-br from-brand-primary to-brand-secondary text-treevu-base text-lg font-bold rounded-xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 group cursor-pointer"
             >
-              Calcular mi ROI
+              {t('hero.ctaRoi')}
               <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2" />
             </a>
             <a 
@@ -97,23 +137,33 @@ const Hero: React.FC = () => {
               aria-label="Explorar el ecosistema de soluciones Treevü"
               className="px-8 py-4 bg-treevu-surface hover:bg-treevu-surface text-white border border-treevu-active hover:border-treevu-muted text-lg font-semibold rounded-xl transition-colors flex items-center justify-center cursor-pointer"
             >
-              Ver Ecosistema
+              {t('hero.ctaEcosystem')}
             </a>
+            <button
+              onClick={() => setIsVideoOpen(true)}
+              aria-label="Ver video explicativo de Treevü"
+              className="px-8 py-4 bg-transparent hover:bg-white/5 text-white border border-white/20 hover:border-white/40 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-3 cursor-pointer group"
+            >
+              <span className="w-10 h-10 rounded-full bg-white/10 group-hover:bg-brand-primary/20 flex items-center justify-center transition-colors">
+                <Play className="w-4 h-4 text-brand-primary ml-0.5" />
+              </span>
+              {t('hero.watchVideo')}
+            </button>
           </div>
 
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-500 font-medium uppercase tracking-wider mb-10 opacity-80">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-segment-empresa" />
-              <span>ISO 27001 Ready</span>
+              <span>{t('hero.trustBadges.iso')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-brand-primary" />
-              <span>Encriptación AES-256</span>
+              <span>{t('hero.trustBadges.encryption')}</span>
             </div>
             <div className="flex items-center gap-2">
               <FileCheck className="w-4 h-4 text-segment-socio" />
-              <span>Sin Custodia de Fondos</span>
+              <span>{t('hero.trustBadges.noCustody')}</span>
             </div>
           </div>
 
@@ -283,6 +333,13 @@ const Hero: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Video Modal */}
+      <VideoModal 
+        isOpen={isVideoOpen} 
+        onClose={() => setIsVideoOpen(false)}
+        title="Treevü: El Sistema Operativo"
+      />
     </section>
   );
 };

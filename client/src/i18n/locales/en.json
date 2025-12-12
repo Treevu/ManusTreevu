@@ -1,0 +1,196 @@
+{
+  "nav": {
+    "solutions": "SOLUTIONS",
+    "demos": "DEMOS",
+    "pricing": "PRICING",
+    "partners": "PARTNERS",
+    "calculateRoi": "Calculate ROI"
+  },
+  "hero": {
+    "badge": "New OCR 2.0 Technology with Treevü Vision Engine™",
+    "brand": "Treevü:",
+    "system": "The Operating",
+    "operative": "System",
+    "slogan": "Artificial Intelligence for Financial Wellness",
+    "description": "We transform a static transactional process into a <1>dynamic data asset</1>. Without touching your cash flow, without balance risk.",
+    "dynamicAsset": "dynamic data asset",
+    "ctaRoi": "Calculate my ROI",
+    "ctaEcosystem": "View Ecosystem",
+    "watchVideo": "Watch Video",
+    "trustBadges": {
+      "iso": "ISO 27001 Ready",
+      "encryption": "AES-256 Encryption",
+      "noCustody": "Non-Custodial"
+    }
+  },
+  "solutions": {
+    "title": "The Ecosystem",
+    "subtitle": "Connecting real needs",
+    "description": "A virtuous cycle where financial wellness creates shared value for everyone.",
+    "employee": {
+      "title": "Employees",
+      "description": "Access to earned wages, financial education, and exclusive benefits"
+    },
+    "company": {
+      "title": "Companies",
+      "description": "Control Tower with wellness metrics and reduced turnover"
+    },
+    "merchant": {
+      "title": "Merchants",
+      "description": "Marketplace of offers with qualified traffic and high conversion"
+    }
+  },
+  "pricing": {
+    "title": "Plans for every stage of your",
+    "titleHighlight": "growth",
+    "subtitle": "From startups to enterprises. No long-term contracts. Cancel anytime.",
+    "transparent": "Transparent pricing, no surprises",
+    "tabs": {
+      "b2b": "Companies (B2B)",
+      "b2c": "Employees (B2C)",
+      "merchants": "Merchants"
+    },
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Ideal for companies starting their financial wellness program.",
+        "price": "$1.99",
+        "period": "/ user / month",
+        "badge": "NO INTEGRATION REQUIRED",
+        "cta": "Start Free Trial"
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "The complete solution for companies seeking measurable results.",
+        "price": "$4.50",
+        "period": "/ user / month",
+        "badge": "MOST POPULAR",
+        "savings": "Save 20% vs. competition",
+        "cta": "Schedule Demo"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "For large companies with customization needs.",
+        "price": "From $7",
+        "period": "/ user / month",
+        "badge": "+500 EMPLOYEES",
+        "cta": "Contact Sales"
+      }
+    },
+    "features": {
+      "fwiDashboard": "FWI Score Dashboard (Wellness Index)",
+      "basicReports": "Basic wellness reports by department",
+      "digitalOnboarding": "Digital onboarding for employees",
+      "riskAlerts": "Basic financial risk alerts",
+      "marketplaceAccess": "Access to discount marketplace",
+      "emailSupport": "Email support",
+      "allStarter": "Everything in Starter +",
+      "ewa": "EWA (Earned Wage Access) interest-free",
+      "predictiveAi": "Predictive AI: Flight risk alerts",
+      "controlTower": "Control Tower: Executive dashboard",
+      "riskClustering": "Risk Clustering by department",
+      "gamification": "Gamification: TreePoints, Badges, Leaderboard",
+      "basicTelemedicine": "Basic telemedicine included",
+      "hrisApi": "HRIS API integration",
+      "prioritySupport": "Priority support",
+      "allProfessional": "Everything in Professional +",
+      "aiIntervention": "AI-automated intervention",
+      "dataAsService": "Data as a Service (DaaS)",
+      "premiumHris": "Premium HRIS integration (SAP, Oracle)",
+      "savingsBox": "Savings account with 8%+ returns",
+      "fullTelemedicine": "Full telemedicine + mental health",
+      "dedicatedCsm": "Dedicated Customer Success Manager",
+      "slaGuarantee": "99.9% SLA guaranteed",
+      "customReports": "Custom reports"
+    },
+    "comparison": {
+      "title": "Why Treevü vs. the competition?",
+      "fwiScore": "FWI Score (Proprietary Index)",
+      "predictiveAi": "Predictive Risk AI",
+      "gamification": "Full Gamification",
+      "noCustody": "Non-Custodial Model",
+      "latamFocus": "LATAM Focus",
+      "telemedicine": "Telemedicine Included"
+    },
+    "trustBadges": {
+      "noCustody": "Non-Custodial",
+      "noCustodyDesc": "We never touch your money",
+      "iso": "ISO 27001",
+      "isoDesc": "Certified security",
+      "latam": "LATAM Ready",
+      "latamDesc": "Mexico, Colombia, Chile, Peru",
+      "support": "24/7 Support",
+      "supportDesc": "Always in Spanish"
+    },
+    "faq": {
+      "contracts": {
+        "question": "Are there long-term contracts?",
+        "answer": "No. All our plans are monthly and you can cancel at any time without penalties."
+      },
+      "implementation": {
+        "question": "How long does implementation take?",
+        "answer": "The Starter plan is ready in 24 hours. Professional takes 1-2 weeks. Enterprise requires 4-6 weeks for custom integrations."
+      },
+      "ewaDebt": {
+        "question": "Does EWA create debt for the employee?",
+        "answer": "No. EWA is an advance on already earned wages, not a loan. It's automatically deducted from payroll without interest."
+      },
+      "security": {
+        "question": "What about data security?",
+        "answer": "We comply with ISO 27001, AES-256 encryption in transit and at rest, and we never store sensitive financial data."
+      }
+    }
+  },
+  "roi": {
+    "title": "Calculate your",
+    "titleHighlight": "Return on Investment",
+    "subtitle": "Discover how much your company can save with Treevü",
+    "employees": "Number of Employees",
+    "turnover": "Annual Turnover (%)",
+    "avgSalary": "Average Salary (USD)",
+    "absenteeism": "Absenteeism Days/Year",
+    "calculate": "Calculate Impact",
+    "results": {
+      "turnoverSavings": "Turnover Savings",
+      "absenteeismSavings": "Absenteeism Savings",
+      "productivityGain": "Productivity Gain",
+      "totalRoi": "Total Annual ROI"
+    }
+  },
+  "contact": {
+    "title": "Join the",
+    "titleHighlight": "Partner Program",
+    "subtitle": "Be part of the ecosystem transforming financial wellness in LATAM",
+    "tabs": {
+      "company": "I'm a Company",
+      "user": "I'm a User"
+    },
+    "form": {
+      "name": "Full name",
+      "namePlaceholder": "e.g. John Smith",
+      "email": "Email address",
+      "emailPlaceholder": "john@company.com",
+      "company": "Company",
+      "companyPlaceholder": "Organization Name",
+      "size": "Company size",
+      "sizes": {
+        "small": "100 - 500 Employees",
+        "medium": "500 - 2,000 Employees",
+        "large": "+2,000 Employees"
+      },
+      "submit": "Apply to Program"
+    }
+  },
+  "footer": {
+    "description": "The Financial Wellness Operating System for LATAM",
+    "contact": "contact@treevu.app",
+    "copyright": "© 2024 Treevü. All rights reserved."
+  },
+  "common": {
+    "learnMore": "Learn more",
+    "getStarted": "Get Started",
+    "contactUs": "Contact Us",
+    "readMore": "Read more",
+    "viewAll": "View all"
+  }
+}

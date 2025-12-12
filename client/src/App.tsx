@@ -34,6 +34,11 @@ import AnalyticsAdmin from '@/pages/AnalyticsAdmin';
 import AlertsConfig from '@/pages/AlertsConfig';
 import ExecutiveDashboard from '@/pages/ExecutiveDashboard';
 import AlertThresholdsConfig from '@/pages/AlertThresholdsConfig';
+import SecuritySettings from '@/pages/SecuritySettings';
+import PulseSurvey from '@/pages/PulseSurvey';
+import SurveyResults from '@/pages/SurveyResults';
+import Badges from '@/pages/Badges';
+import InvestorPitch from '@/pages/InvestorPitch';
 import { CommandPalette, useCommandPalette } from "./components/CommandPalette";
 import { PageTransition } from "./components/PageTransition";
 import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
@@ -44,6 +49,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path="/investor-pitch" component={InvestorPitch} />
       <Route path={"/old-landing"} component={Landing} />
       <Route path={"/dashboard/employee"} component={EmployeeDashboard} />
       <Route path={"/dashboard/b2b"} component={B2BDashboard} />
@@ -61,6 +67,8 @@ function Router() {
       <Route path={"/dashboard/alert-thresholds"} component={AlertThresholdsConfig} />
       <Route path={"/achievements"} component={Achievements} />
       <Route path={"/leaderboard"} component={Leaderboard} />
+      <Route path="/badges" component={Badges} />
+      <Route path="/profile/badges" component={Badges} />
       <Route path={"/profile"} component={Profile} />
       <Route path="/profile/:userId" component={Profile} />
       <Route path="/referrals" component={Referrals} />
@@ -74,6 +82,9 @@ function Router() {
       <Route path="/demo/empresa" component={DemoEmpresa} />
       <Route path="/demo/comercio" component={DemoComercio} />
       <Route path="/demos" component={Demos} />
+      <Route path="/settings/security" component={SecuritySettings} />
+      <Route path="/survey" component={PulseSurvey} />
+      <Route path="/dashboard/survey-results" component={SurveyResults} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

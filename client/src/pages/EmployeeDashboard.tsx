@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { 
   Loader2, TrendingUp, Wallet, Target, Gift, ArrowLeft, 
-  Plus, MessageCircle, Send, Sparkles, AlertCircle, Settings
+  Plus, MessageCircle, Send, Sparkles, AlertCircle, Settings, ClipboardList, Shield
 } from "lucide-react";
 import NotificationCenter from "@/components/NotificationCenter";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -28,6 +28,16 @@ import { cacheSet, cacheGet } from "@/lib/offlineCache";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProductTour } from "@/components/ProductTour";
 import { NotificationPermission } from "@/components/NotificationPermission";
+import { FinancialShieldCard } from "@/components/dashboard/FinancialShieldCard";
+import { AntExpenseDetector } from "@/components/dashboard/AntExpenseDetector";
+import { EWASlider } from "@/components/dashboard/EWASlider";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { ProgressiveDisclosure, FWI_EDUCATION_STEPS, EWA_EDUCATION_STEPS } from "@/components/dashboard/ProgressiveDisclosure";
+import { EducationGamification } from "@/components/EducationGamification";
+import { allTutorials } from "@/lib/educationalContent";
+import { Leaderboard } from "@/components/Leaderboard";
+import { BadgeShowcase } from "@/components/BadgeCard";
+import { Award, Trophy } from "lucide-react";
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
@@ -38,6 +48,8 @@ export default function EmployeeDashboard() {
   const [previousCompletedGoals, setPreviousCompletedGoals] = useState<number>(0);
   const [pendingGoal, setPendingGoal] = useState<{ name: string; target: number; deadline: string } | null>(null);
   const [isCreatingGoal, setIsCreatingGoal] = useState(false);
+  const [showFwiEducation, setShowFwiEducation] = useState(false);
+  const [showEwaEducation, setShowEwaEducation] = useState(false);
 
   // Offline state and network quality
   const { isOnline } = useOffline();
@@ -195,7 +207,7 @@ export default function EmployeeDashboard() {
                 Volver
               </Button>
             </Link>
-            <h1 className="text-xl font-display font-bold text-white">Mi Dashboard</h1>
+            <h1 data-tour="welcome" className="text-xl font-display font-bold text-white">Mi Dashboard</h1>
           </div>
           <div className="flex items-center space-x-3">
             <div data-tour="treepoints" className="flex items-center space-x-2 bg-white/5 rounded-full px-4 py-2 border border-white/10">
@@ -205,6 +217,16 @@ export default function EmployeeDashboard() {
             </div>
             <ThemeToggle />
             <NotificationCenter />
+            <Link href="/survey">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-teal-500/10" title="Encuesta de bienestar">
+                <ClipboardList className="h-5 w-5 text-teal-400" />
+              </Button>
+            </Link>
+            <Link href="/settings/security">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-blue-500/10" title="Seguridad">
+                <Shield className="h-5 w-5 text-blue-400" />
+              </Button>
+            </Link>
             <Link href="/settings/notifications">
               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
                 <Settings className="h-5 w-5 text-gray-400" />
@@ -222,9 +244,11 @@ export default function EmployeeDashboard() {
               <div>
                 <p className="text-gray-400 text-sm flex items-center gap-1">
                   FWI Score
-                  <InfoTooltip 
-                    title="Índice de Bienestar Financiero" 
-                    content="Tu FWI (Financial Wellness Index) mide tu salud financiera de 0 a 100. Mejora registrando gastos, cumpliendo metas y manteniendo buenos hábitos financieros."
+                  <EducationGamification
+                    data-tour="education"
+                    tutorialType="fwi"
+                    steps={allTutorials.employee.fwi.basic.steps}
+                    onComplete={() => toast.success('¡Felicidades! Has ganado 50 TreePoints por completar el tutorial de FWI')}
                   />
                   {usingCache && <OfflineDataBadge size="sm" />}
                 </p>
@@ -267,6 +291,30 @@ export default function EmployeeDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Copiloto Financiero - Nuevos componentes premium */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <FinancialShieldCard 
+            savedInterest={2450} 
+            creditCardRate={45.9} 
+            treevuFee={3.99} 
+          />
+          <AntExpenseDetector 
+            onCreateGoal={(name, target) => {
+              setPendingGoal({ name, target, deadline: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] });
+              setIsCreatingGoal(true);
+            }}
+          />
+          <EWASlider 
+            data-tour="ewa"
+            maxAvailable={500} 
+            operativeFee={3.99}
+            onRequest={(amount) => {
+              toast.success(`Solicitud de S/ ${amount.toFixed(2)} procesada`);
+            }}
+            onLearnMore={() => setShowEwaEducation(true)}
+          />
+        </div>
 
         <Tabs defaultValue="transactions" className="space-y-6">
           <TabsList className="grid grid-cols-4 w-full max-w-md bg-treevu-surface/50 border border-white/10">
@@ -421,6 +469,33 @@ export default function EmployeeDashboard() {
               </CardContent>
             </Card>
 
+            {/* Leaderboard Widget */}
+            <Leaderboard compact showMyPosition />
+
+            {/* Badges Quick View */}
+            <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <Award className="h-5 w-5 text-yellow-400" />
+                  Mis Insignias
+                </CardTitle>
+                <Link href="/badges">
+                  <Button variant="ghost" size="sm" className="text-brand-primary">
+                    Ver todas
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-400 mb-3">Completa tutoriales y logros para ganar insignias</p>
+                <Link href="/badges">
+                  <Button variant="outline" className="w-full border-brand-primary/50 text-brand-primary hover:bg-brand-primary/10">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Ver colección de insignias
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
             <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
               <CardHeader>
                 <CardTitle className="text-lg text-white">Cómo ganar más TreePoints</CardTitle>
@@ -442,6 +517,10 @@ export default function EmployeeDashboard() {
                   <div className="flex items-center justify-between p-3 bg-brand-primary/10 rounded-lg border border-brand-primary/20">
                     <span className="text-gray-300">Mejorar tu FWI Score</span>
                     <span className="font-semibold text-brand-primary">+25 pts</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                    <span className="text-gray-300">Obtener insignias</span>
+                    <span className="font-semibold text-yellow-400">+100-500 pts</span>
                   </div>
                 </div>
               </CardContent>
@@ -535,6 +614,25 @@ export default function EmployeeDashboard() {
 
       {/* Notification Permission Prompt */}
       <NotificationPermission />
+
+      {/* Educational Modals */}
+      <ProgressiveDisclosure
+        isOpen={showFwiEducation}
+        onClose={() => setShowFwiEducation(false)}
+        title="Aprende sobre tu FWI Score"
+        description="Descubre cómo funciona tu Índice de Bienestar Financiero y cómo mejorarlo"
+        steps={FWI_EDUCATION_STEPS}
+        onComplete={() => toast.success("¡Ahora entiendes mejor tu FWI! +10 TreePoints")}
+      />
+
+      <ProgressiveDisclosure
+        isOpen={showEwaEducation}
+        onClose={() => setShowEwaEducation(false)}
+        title="Aprende sobre EWA"
+        description="Todo lo que necesitas saber sobre el Adelanto de Salario Devengado"
+        steps={EWA_EDUCATION_STEPS}
+        onComplete={() => toast.success("¡Ahora entiendes cómo funciona EWA! +10 TreePoints")}
+      />
     </div>
   );
 }

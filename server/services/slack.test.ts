@@ -7,13 +7,13 @@ import {
 describe('Slack Service', () => {
   describe('isValidSlackWebhook', () => {
     it('should return true for valid Slack webhook URLs', () => {
-      expect(isValidSlackWebhook('https://dummy/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX')).toBe(true);
+      expect(isValidSlackWebhook('https://dummy.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX')).toBe(true);
     });
 
     it('should return false for invalid URLs', () => {
       expect(isValidSlackWebhook('')).toBe(false);
       expect(isValidSlackWebhook('https://example.com/webhook')).toBe(false);
-      expect(isValidSlackWebhook('https://dummy/other/path')).toBe(false);
+      expect(isValidSlackWebhook('https://dummy.com/other/path')).toBe(false);
       expect(isValidSlackWebhook('not-a-url')).toBe(false);
     });
 

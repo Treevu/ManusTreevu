@@ -1,216 +1,294 @@
-
 import React, { useState } from 'react';
-import { Check, Sparkles, ShieldCheck, Database, Link, Zap } from 'lucide-react';
-import { PlanType, PricingPlan } from './types';
+import { Check, Sparkles, ShieldCheck, Database, Zap, Building2, Users, Store, Brain, Heart, Wallet, TrendingUp, Award, Bell, BarChart3, Headphones, Globe, Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+type PlanType = 'EMPRESA' | 'PERSONA' | 'COMERCIO';
+
+interface PricingPlan {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  cta: string;
+  highlight: boolean;
+  badge?: string;
+  savings?: string;
+}
 
 const plans: Record<PlanType, PricingPlan[]> = {
-  [PlanType.PERSONA]: [
+  EMPRESA: [
     {
-      name: 'Freemium',
-      price: 'Gratis',
-      period: 'Siempre',
-      description: 'Funciones esenciales para tu bienestar financiero.',
+      name: 'Starter',
+      price: '$1.99',
+      period: '/ usuario / mes',
+      description: 'Ideal para empresas que inician su programa de bienestar financiero.',
       features: [
-        'Dashboard FWI (Estado Financiero)', 
-        'Simulador de Adelantos (Pay stub preview)',
-        'EWA Lite (Tarifa transaccional solo si >50%)',
-        'Gamificación Básica (Rachas)', 
-        'Alertas Legales Básicas'
+        'FWI Score Dashboard (Índice de Bienestar)',
+        'Reportes básicos de bienestar por departamento',
+        'Onboarding digital para empleados',
+        'Alertas de riesgo financiero básicas',
+        'Acceso a marketplace de descuentos',
+        'Soporte por email'
       ],
-      cta: 'Empezar Gratis',
-      highlight: false
+      cta: 'Comenzar Prueba Gratis',
+      highlight: false,
+      badge: 'Sin integración requerida'
     },
     {
-      name: 'Treevü Plus',
-      price: '$4.99',
-      period: '/ mes',
-      description: 'Potencia tu salud financiera con IA y Coaching.',
-      features: [
-        'Todo lo de Freemium', 
-        'Treevü Brain (Asesor IA)', 
-        'Alertas Avanzadas y Predictivas', 
-        'Micro-tarifas EWA preferenciales',
-        'Gamificación Extendida (Logros y TreePoints)'
-      ],
-      cta: 'Prueba 30 días',
-      highlight: true
-    }
-  ],
-  [PlanType.EMPRESA]: [
-    {
-      name: 'Core SaaS',
-      price: '$2.50',
+      name: 'Professional',
+      price: '$4.50',
       period: '/ usuario / mes',
-      description: 'Optimiza la retención y visibilidad básica.',
+      description: 'La solución completa para empresas que buscan resultados medibles.',
       features: [
-        'Dashboard Predictivo FWI', 
-        'Reportes de ROI en Retención', 
-        'API Integración HRIS Standard', 
-        'Onboarding Digital'
-      ],
-      cta: 'Contactar Ventas',
-      highlight: false
-    },
-    {
-      name: 'Proactive',
-      price: '$5.00',
-      period: '/ usuario / mes',
-      description: 'Inteligencia predictiva de riesgo laboral.',
-      features: [
-        'Todo lo de Core', 
-        'Risk Clustering (Clusters Críticos)', 
-        'Intervention Studio (Acciones)', 
-        'Risk Engine & Alertas de Fuga',
-        'Soporte Prioritario'
+        'Todo lo de Starter +',
+        'EWA (Adelanto de Salario) sin intereses',
+        'IA Predictiva: Alertas de riesgo de fuga',
+        'Torre de Control: Dashboard ejecutivo',
+        'Risk Clustering por departamento',
+        'Gamificación: TreePoints, Badges, Leaderboard',
+        'Telemedicina básica incluida',
+        'API integración con HRIS',
+        'Soporte prioritario'
       ],
       cta: 'Agendar Demo',
-      highlight: true
+      highlight: true,
+      badge: 'Más Popular',
+      savings: 'Ahorra 20% vs. competencia'
     },
     {
       name: 'Enterprise',
-      price: 'Custom',
-      period: 'Anual',
-      description: 'Para grandes nóminas y necesidades complejas.',
+      price: 'Desde $7',
+      period: '/ usuario / mes',
+      description: 'Para grandes empresas con necesidades de personalización.',
       features: [
-        'DaaS (Data as a Service)', 
-        'Integración HRIS Premium', 
-        'Intervención Automatizada', 
-        'Customer Success Dedicado'
+        'Todo lo de Professional +',
+        'Intervención automatizada con IA',
+        'Data as a Service (DaaS)',
+        'Integración HRIS premium (SAP, Oracle)',
+        'Caja de ahorro con rendimiento 8%+',
+        'Telemedicina completa + salud mental',
+        'Customer Success Manager dedicado',
+        'SLA garantizado 99.9%',
+        'Reportes personalizados'
       ],
-      cta: 'Cotizar',
-      highlight: false
+      cta: 'Contactar Ventas',
+      highlight: false,
+      badge: '+500 empleados'
     }
   ],
-  [PlanType.COMERCIO]: [
+  PERSONA: [
     {
-      name: 'Performance',
-      price: '5-10%',
-      period: 'Take Rate / Venta',
-      description: 'Monetiza llegando a usuarios con liquidez validada.',
+      name: 'Básico',
+      price: 'Gratis',
+      period: 'Siempre',
+      description: 'Todo lo que necesitas para mejorar tu salud financiera.',
       features: [
-        'Listado en Marketplace', 
-        'Validación FWI de Usuarios', 
-        'Redención No-Custodio', 
-        'Reportes de Ventas Básicos'
+        'Dashboard FWI personal',
+        'Seguimiento de gastos e ingresos',
+        'Metas de ahorro ilimitadas',
+        'Acceso a marketplace de descuentos',
+        'Alertas de pagos y vencimientos',
+        'Educación financiera básica',
+        'Gamificación: Rachas y logros'
       ],
-      cta: 'Registrar Comercio',
-      highlight: false
+      cta: 'Descargar App Gratis',
+      highlight: false,
+      badge: 'Sin costo para empleados'
     },
     {
-      name: 'Smart Growth',
-      price: 'Suscripción',
-      period: 'Opcional / mes',
-      description: 'Campañas de IA y alta conversión.',
+      name: 'Premium',
+      price: '$2.99',
+      period: '/ mes',
+      description: 'Potencia tu bienestar con IA y coaching personalizado.',
       features: [
-        'Todo lo de Performance', 
-        'IA Marketing Studio: Crea campañas hiper-segmentadas y mejora la conversión', 
-        'Smart Offers (Historial de Compras)', 
-        'Benchmarking Sectorial',
-        'Badge "Comercio Aliado"'
+        'Todo lo de Básico +',
+        'Treevü Brain: Asesor financiero IA 24/7',
+        'Alertas predictivas personalizadas',
+        'Coaching financiero con expertos',
+        'Micro-tarifas EWA preferenciales',
+        'Reportes detallados de progreso',
+        'Acceso anticipado a nuevas features',
+        'Sin publicidad'
       ],
-      cta: 'Potenciar Ventas',
-      highlight: true
+      cta: 'Prueba 14 días gratis',
+      highlight: true,
+      badge: 'Opcional'
+    }
+  ],
+  COMERCIO: [
+    {
+      name: 'Marketplace',
+      price: '5%',
+      period: 'comisión por venta',
+      description: 'Llega a miles de empleados con liquidez validada.',
+      features: [
+        'Listado en marketplace Treevü',
+        'Validación FWI de compradores',
+        'Panel de ventas en tiempo real',
+        'Redención de cupones QR',
+        'Pagos semanales garantizados',
+        'Soporte básico'
+      ],
+      cta: 'Registrar Mi Comercio',
+      highlight: false,
+      badge: 'Sin costo fijo'
+    },
+    {
+      name: 'Partner',
+      price: '3%',
+      period: '+ $99/mes',
+      description: 'Maximiza conversiones con IA y posicionamiento premium.',
+      features: [
+        'Todo lo de Marketplace +',
+        'Comisión reducida (3% vs 5%)',
+        'IA Marketing Studio: Campañas segmentadas',
+        'Smart Offers basadas en historial',
+        'Posicionamiento destacado',
+        'Badge "Comercio Aliado Treevü"',
+        'Benchmarking vs. competencia',
+        'Account Manager dedicado'
+      ],
+      cta: 'Aplicar como Partner',
+      highlight: true,
+      badge: 'ROI Garantizado'
     }
   ]
 };
 
+const tabConfig = {
+  EMPRESA: { 
+    icon: Building2, 
+    label: 'Empresas (B2B)', 
+    color: 'text-blue-400 border-blue-400',
+    bgColor: 'bg-blue-400',
+    lightBg: 'bg-blue-400/10'
+  },
+  PERSONA: { 
+    icon: Users, 
+    label: 'Empleados (B2C)', 
+    color: 'text-emerald-400 border-emerald-400',
+    bgColor: 'bg-emerald-400',
+    lightBg: 'bg-emerald-400/10'
+  },
+  COMERCIO: { 
+    icon: Store, 
+    label: 'Comercios', 
+    color: 'text-purple-400 border-purple-400',
+    bgColor: 'bg-purple-400',
+    lightBg: 'bg-purple-400/10'
+  }
+};
+
 const Pricing: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<PlanType>(PlanType.EMPRESA); // Default to Empresa as per "SaaS First" approach
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<PlanType>('EMPRESA');
 
-  // Helper to get active color based on tab
-  const getActiveColor = () => {
-    switch(activeTab) {
-      case PlanType.PERSONA: return 'text-brand-primary border-brand-primary shadow-[0_0_15px_rgba(52,211,153,0.3)]';
-      case PlanType.EMPRESA: return 'text-segment-empresa border-segment-empresa shadow-[0_0_15px_rgba(96,165,250,0.3)]';
-      case PlanType.COMERCIO: return 'text-segment-socio border-segment-socio shadow-[0_0_15px_rgba(192,132,252,0.3)]';
-    }
-  };
-
-  const getButtonColor = (isHighlight: boolean) => {
-    if (!isHighlight) return 'bg-treevu-active text-white hover:bg-gray-600';
-    switch(activeTab) {
-      case PlanType.PERSONA: return 'bg-brand-primary text-treevu-base hover:bg-brand-secondary';
-      case PlanType.EMPRESA: return 'bg-segment-empresa text-treevu-base hover:bg-blue-400';
-      case PlanType.COMERCIO: return 'bg-segment-socio text-white hover:bg-purple-500';
-    }
-  };
+  const currentConfig = tabConfig[activeTab];
 
   return (
-    <section id="pricing" className="py-32 bg-treevu-base border-t border-treevu-active">
+    <section id="pricing" className="py-24 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="text-center mb-16">
-          <span className="text-segment-empresa font-semibold tracking-widest uppercase text-xs mb-2 block">
-            Estrategia Treevü Proactive
-          </span>
-          <h2 className="text-4xl font-display font-bold text-white mb-4">SaaS Primero, Transaccional Después</h2>
-          <p className="text-treevu-muted max-w-2xl mx-auto text-lg">
-            Un modelo de monetización escalonado: Engagement → Data → Transacción → Loyalty. Sin riesgo financiero, sin custodia.
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm mb-6">
+            <TrendingUp className="w-4 h-4" />
+            {t('pricing.transparent')}
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            {t('pricing.title')}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400"> {t('pricing.titleHighlight')}</span>
+          </h2>
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+            {t('pricing.subtitle')}
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center mb-16">
-          <div className="bg-treevu-surface p-1.5 rounded-2xl border border-treevu-active inline-flex">
-            {Object.values(PlanType).map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
-                  activeTab === type
-                    ? `bg-treevu-base border border-treevu-active ${getActiveColor()}`
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                {type.charAt(0) + type.slice(1).toLowerCase() + (type === PlanType.PERSONA ? 's (B2C)' : type === PlanType.EMPRESA ? 's (B2B)' : 's (Merchants)')}
-              </button>
-            ))}
+        <div className="flex justify-center mb-12">
+          <div className="bg-gray-800/50 p-1.5 rounded-2xl border border-gray-700 inline-flex gap-1">
+            {(Object.keys(tabConfig) as PlanType[]).map((type) => {
+              const config = tabConfig[type];
+              const Icon = config.icon;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setActiveTab(type)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                    activeTab === type
+                      ? `bg-gray-900 ${config.color} border border-current shadow-lg`
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {config.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Cards Grid (Flexbox for centering) */}
-        <div className="flex flex-wrap justify-center gap-8 items-stretch mb-24">
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {plans[activeTab].map((plan, idx) => (
             <div 
               key={idx} 
-              className={`relative w-full md:max-w-[48%] lg:max-w-[32%] min-w-[320px] bg-treevu-surface rounded-3xl transition-all duration-300 overflow-hidden flex flex-col ${
+              className={`relative bg-gray-900/50 rounded-3xl transition-all duration-300 overflow-hidden flex flex-col ${
                 plan.highlight 
-                  ? 'border-2 shadow-2xl z-10 scale-105' 
-                  : 'border border-treevu-active hover:border-gray-600'
+                  ? 'border-2 shadow-2xl scale-[1.02] z-10' 
+                  : 'border border-gray-800 hover:border-gray-700'
               }`}
-              style={{ borderColor: plan.highlight ? (activeTab === PlanType.PERSONA ? '#34D399' : activeTab === PlanType.EMPRESA ? '#60A5FA' : '#C084FC') : '' }}
+              style={{ borderColor: plan.highlight ? (activeTab === 'EMPRESA' ? '#60A5FA' : activeTab === 'PERSONA' ? '#34D399' : '#A78BFA') : '' }}
             >
-              {plan.highlight && (
-                <div className={`absolute top-0 left-0 w-full text-center py-2 text-xs font-bold uppercase tracking-widest text-treevu-base`}
-                     style={{ backgroundColor: activeTab === PlanType.PERSONA ? '#34D399' : activeTab === PlanType.EMPRESA ? '#60A5FA' : '#C084FC' }}>
+              {/* Badge */}
+              {plan.badge && (
+                <div 
+                  className={`absolute top-0 left-0 right-0 text-center py-2 text-xs font-bold uppercase tracking-wider ${
+                    plan.highlight ? 'text-gray-900' : 'text-white bg-gray-800'
+                  }`}
+                  style={{ backgroundColor: plan.highlight ? (activeTab === 'EMPRESA' ? '#60A5FA' : activeTab === 'PERSONA' ? '#34D399' : '#A78BFA') : '' }}
+                >
                   <div className="flex justify-center items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Recomendado
+                    {plan.highlight && <Sparkles className="w-3 h-3" />}
+                    {plan.badge}
                   </div>
                 </div>
               )}
               
-              <div className="p-8 pt-12 flex-1">
-                <h3 className="text-2xl font-display font-bold text-white mb-2">{plan.name}</h3>
-                <p className="text-treevu-muted text-sm mb-8 min-h-[40px] leading-relaxed">{plan.description}</p>
+              <div className="p-8 pt-14 flex-1">
+                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                <p className="text-gray-400 text-sm mb-6 min-h-[48px]">{plan.description}</p>
                 
-                <div className="flex items-baseline mb-8">
-                  <span className="text-4xl lg:text-5xl font-bold text-white tracking-tight">{plan.price}</span>
-                  <span className="text-treevu-muted ml-2 text-xs font-medium uppercase tracking-wide">{plan.period}</span>
+                <div className="flex items-baseline mb-2">
+                  <span className="text-5xl font-bold text-white">{plan.price}</span>
+                  <span className="text-gray-500 ml-2 text-sm">{plan.period}</span>
                 </div>
                 
+                {plan.savings && (
+                  <p className="text-emerald-400 text-sm mb-6">{plan.savings}</p>
+                )}
+                
                 <a 
-                  href="#founders-offer"
-                  className={`block w-full py-4 px-4 rounded-xl text-center font-bold transition-all shadow-lg hover:shadow-xl ${getButtonColor(!!plan.highlight)}`}
+                  href="#contact"
+                  className={`block w-full py-4 px-4 rounded-xl text-center font-bold transition-all mt-6 ${
+                    plan.highlight 
+                      ? `${currentConfig.bgColor} text-gray-900 hover:opacity-90` 
+                      : 'bg-gray-800 text-white hover:bg-gray-700'
+                  }`}
                 >
                   {plan.cta}
                 </a>
               </div>
 
               <div className="px-8 pb-8">
-                <div className="h-px w-full bg-treevu-active mb-6"></div>
-                <ul className="space-y-4">
+                <div className="h-px w-full bg-gray-800 mb-6"></div>
+                <ul className="space-y-3">
                   {plan.features.map((feature, fIdx) => (
                     <li key={fIdx} className="flex items-start">
-                      <Check className={`h-5 w-5 mr-3 flex-shrink-0 ${activeTab === PlanType.PERSONA ? 'text-brand-primary' : activeTab === PlanType.EMPRESA ? 'text-segment-empresa' : 'text-segment-socio'}`} />
+                      <Check className={`h-5 w-5 mr-3 flex-shrink-0 mt-0.5 ${
+                        activeTab === 'EMPRESA' ? 'text-blue-400' : 
+                        activeTab === 'PERSONA' ? 'text-emerald-400' : 'text-purple-400'
+                      }`} />
                       <span className="text-gray-300 text-sm">{feature}</span>
                     </li>
                   ))}
@@ -220,38 +298,124 @@ const Pricing: React.FC = () => {
           ))}
         </div>
 
-        {/* CORPORATE FAQ / STRATEGIC NOTES */}
-        <div className="max-w-6xl mx-auto">
-            <h3 className="text-2xl font-display font-bold text-white text-center mb-10">Pilares Estratégicos</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-treevu-surface p-6 rounded-2xl border border-treevu-active hover:border-segment-empresa transition-colors group">
-                    <div className="w-12 h-12 rounded-xl bg-segment-empresa/10 flex items-center justify-center mb-4 text-segment-empresa group-hover:bg-segment-empresa group-hover:text-treevu-base transition-colors">
-                        <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-white font-bold mb-2">Arquitectura No-Custodio</h4>
-                    <p className="text-sm text-treevu-muted leading-relaxed">
-                        Treevü nunca toca el dinero. El modelo "EWA Lite" y la redención de cupones operan sin intermediación financiera, permitiendo escalabilidad masiva sin riesgo regulatorio.
-                    </p>
-                </div>
-                <div className="bg-treevu-surface p-6 rounded-2xl border border-treevu-active hover:border-brand-primary transition-colors group">
-                     <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center mb-4 text-brand-primary group-hover:bg-brand-primary group-hover:text-treevu-base transition-colors">
-                        <Zap className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-white font-bold mb-2">Gamificación & Stickiness</h4>
-                    <p className="text-sm text-treevu-muted leading-relaxed">
-                        Los TreePoints y las rachas crean un hábito diario. Esto potencia el cross-selling B2B2C y mantiene el engagement alto en todos los segmentos.
-                    </p>
-                </div>
-                <div className="bg-treevu-surface p-6 rounded-2xl border border-treevu-active hover:border-segment-socio transition-colors group">
-                     <div className="w-12 h-12 rounded-xl bg-segment-socio/10 flex items-center justify-center mb-4 text-segment-socio group-hover:bg-segment-socio group-hover:text-white transition-colors">
-                        <Database className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-white font-bold mb-2">SaaS + Micro-tarifas</h4>
-                    <p className="text-sm text-treevu-muted leading-relaxed">
-                        Precios PEPM escalables para empresas y micro-tarifas transaccionales para usuarios power-users, maximizando el LTV sin barreras de entrada.
-                    </p>
-                </div>
-            </div>
+        {/* Trust Badges */}
+        <div className="grid md:grid-cols-4 gap-6 mb-16">
+          <div className="bg-gray-900/30 p-6 rounded-2xl border border-gray-800 text-center">
+            <Lock className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
+            <h4 className="text-white font-semibold mb-1">Sin Custodia</h4>
+            <p className="text-gray-500 text-sm">Nunca tocamos tu dinero</p>
+          </div>
+          <div className="bg-gray-900/30 p-6 rounded-2xl border border-gray-800 text-center">
+            <ShieldCheck className="w-8 h-8 text-blue-400 mx-auto mb-3" />
+            <h4 className="text-white font-semibold mb-1">ISO 27001</h4>
+            <p className="text-gray-500 text-sm">Seguridad certificada</p>
+          </div>
+          <div className="bg-gray-900/30 p-6 rounded-2xl border border-gray-800 text-center">
+            <Globe className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+            <h4 className="text-white font-semibold mb-1">LATAM Ready</h4>
+            <p className="text-gray-500 text-sm">México, Colombia, Chile, Perú</p>
+          </div>
+          <div className="bg-gray-900/30 p-6 rounded-2xl border border-gray-800 text-center">
+            <Headphones className="w-8 h-8 text-orange-400 mx-auto mb-3" />
+            <h4 className="text-white font-semibold mb-1">Soporte 24/7</h4>
+            <p className="text-gray-500 text-sm">En español siempre</p>
+          </div>
+        </div>
+
+        {/* Comparison with Competition */}
+        <div className="bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-purple-500/10 rounded-3xl p-8 border border-gray-800">
+          <h3 className="text-2xl font-bold text-white text-center mb-8">¿Por qué Treevü vs. la competencia?</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Feature</th>
+                  <th className="text-center py-4 px-4 text-emerald-400 font-bold">Treevü</th>
+                  <th className="text-center py-4 px-4 text-gray-500">Minu</th>
+                  <th className="text-center py-4 px-4 text-gray-500">Wagestream</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">FWI Score (Índice propietario)</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">IA Predictiva de Riesgo</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                  <td className="text-center py-3 px-4 text-gray-600">Básico</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">Gamificación (TreePoints, Badges)</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">Marketplace B2B2C</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-gray-500 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">Torre de Control Ejecutiva</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">Básico</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-gray-500 mx-auto" /></td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-3 px-4">Precio por empleado/mes</td>
+                  <td className="text-center py-3 px-4 text-emerald-400 font-bold">Desde $1.99</td>
+                  <td className="text-center py-3 px-4">~$6.50</td>
+                  <td className="text-center py-3 px-4">$0.50-$2</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4">Sin custodia de fondos</td>
+                  <td className="text-center py-3 px-4"><Check className="w-5 h-5 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                  <td className="text-center py-3 px-4 text-gray-600">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h3 className="text-2xl font-bold text-white text-center mb-8">Preguntas Frecuentes</h3>
+          <div className="space-y-4">
+            <details className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 group">
+              <summary className="text-white font-semibold cursor-pointer list-none flex justify-between items-center">
+                ¿Hay contratos de largo plazo?
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p className="text-gray-400 mt-4">No. Todos nuestros planes son mes a mes. Puedes cancelar en cualquier momento sin penalidades.</p>
+            </details>
+            <details className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 group">
+              <summary className="text-white font-semibold cursor-pointer list-none flex justify-between items-center">
+                ¿Cuánto tiempo toma la implementación?
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p className="text-gray-400 mt-4">El plan Starter se activa en 24 horas sin integración. Professional y Enterprise típicamente toman 2-4 semanas dependiendo de la complejidad de tu HRIS.</p>
+            </details>
+            <details className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 group">
+              <summary className="text-white font-semibold cursor-pointer list-none flex justify-between items-center">
+                ¿El EWA genera deuda para el empleado?
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p className="text-gray-400 mt-4">No. El EWA (Earned Wage Access) es un adelanto del salario ya trabajado, no un préstamo. No genera intereses ni afecta el historial crediticio del empleado.</p>
+            </details>
+            <details className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 group">
+              <summary className="text-white font-semibold cursor-pointer list-none flex justify-between items-center">
+                ¿Qué pasa con la seguridad de los datos?
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p className="text-gray-400 mt-4">Treevü cuenta con certificación ISO 27001 y cumple con regulaciones de protección de datos de México, Colombia y Chile. Nunca vendemos datos de usuarios a terceros.</p>
+            </details>
+          </div>
         </div>
       </div>
     </section>

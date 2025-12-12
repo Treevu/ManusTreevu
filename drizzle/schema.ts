@@ -639,10 +639,10 @@ export type InsertOrganizationAlertThreshold = typeof organizationAlertThreshold
 export const mfaSettings = mysqlTable("mfa_settings", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  secret: varchar("secret", { length: 64 }).notNull(), // TOTP secret (encrypted)
+  secret: varchar("secret", { length: 64 }).notNull(),
   enabled: boolean("enabled").default(false).notNull(),
-  verifiedAt: timestamp("verifiedAt"), // When MFA was first verified
-  backupCodes: text("backupCodes"), // JSON array of hashed backup codes
+  verifiedAt: timestamp("verifiedAt"),
+  backupCodes: text("backupCodes"),
   backupCodesUsed: int("backupCodesUsed").default(0).notNull(),
   lastUsedAt: timestamp("lastUsedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -659,7 +659,7 @@ export const pulseSurveys = mysqlTable("pulse_surveys", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
-  organizationId: int("organizationId"), // NULL = global survey
+  organizationId: int("organizationId"),
   frequency: mysqlEnum("frequency", ["weekly", "biweekly", "monthly"]).default("weekly").notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   startsAt: timestamp("startsAt"),
@@ -688,7 +688,7 @@ export const pulseQuestions = mysqlTable("pulse_questions", {
     "savings_habits",
     "overall_wellbeing"
   ]).default("overall_wellbeing").notNull(),
-  options: text("options"), // JSON for choice questions
+  options: text("options"),
   orderIndex: int("orderIndex").default(0).notNull(),
   isRequired: boolean("isRequired").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -705,9 +705,9 @@ export const pulseResponses = mysqlTable("pulse_responses", {
   surveyId: int("surveyId").notNull(),
   questionId: int("questionId").notNull(),
   userId: int("userId").notNull(),
-  responseValue: int("responseValue"), // 1-5 for scale/emoji
-  responseText: text("responseText"), // For text responses
-  responseChoice: varchar("responseChoice", { length: 200 }), // For choice questions
+  responseValue: int("responseValue"),
+  responseText: text("responseText"),
+  responseChoice: varchar("responseChoice", { length: 200 }),
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
 });
 
@@ -729,3 +729,197 @@ export const pulseSurveyAssignments = mysqlTable("pulse_survey_assignments", {
 
 export type PulseSurveyAssignment = typeof pulseSurveyAssignments.$inferSelect;
 export type InsertPulseSurveyAssignment = typeof pulseSurveyAssignments.$inferInsert;
+
+
+/**
+ * Offer Redemptions - Track TreePoints redemptions with QR codes
+ */
+export const offerRedemptions = mysqlTable("offer_redemptions", {
+  id: int("id").autoincrement().primaryKey(),
+  offerId: int("offerId").notNull(),
+  userId: int("userId").notNull(),
+  merchantId: int("merchantId").notNull(),
+  pointsSpent: int("pointsSpent").notNull(),
+  couponCode: varchar("couponCode", { length: 50 }).notNull().unique(),
+  qrCodeData: text("qrCodeData"), // Base64 QR code image
+  status: mysqlEnum("status", ["pending", "validated", "expired", "cancelled"]).default("pending").notNull(),
+  validatedAt: timestamp("validatedAt"),
+  validatedBy: int("validatedBy"), // Merchant user who validated
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OfferRedemption = typeof offerRedemptions.$inferSelect;
+export type InsertOfferRedemption = typeof offerRedemptions.$inferInsert;
+
+/**
+ * Education Progress - Track user progress through educational tutorials
+ */
+export const educationProgress = mysqlTable("education_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tutorialType: varchar("tutorialType", { length: 50 }).notNull(), // 'fwi', 'ewa', 'b2b', 'merchant'
+  stepsCompleted: int("stepsCompleted").default(0).notNull(),
+  totalSteps: int("totalSteps").notNull(),
+  isCompleted: boolean("isCompleted").default(false).notNull(),
+  pointsAwarded: int("pointsAwarded").default(0).notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EducationProgress = typeof educationProgress.$inferSelect;
+export type InsertEducationProgress = typeof educationProgress.$inferInsert;
+
+
+/**
+ * Badges - Gamification badges/insignias for user achievements
+ */
+export const badges = mysqlTable("badges", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // Unique identifier like 'fwi_master'
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 50 }).notNull(), // Lucide icon name
+  color: varchar("color", { length: 20 }).notNull(), // Tailwind color class
+  category: mysqlEnum("category", [
+    "education",    // Tutorial completion badges
+    "financial",    // FWI and financial health badges
+    "engagement",   // Platform usage badges
+    "social",       // Referral and community badges
+    "merchant",     // Merchant-specific badges
+    "b2b"           // B2B admin badges
+  ]).notNull(),
+  requirement: text("requirement").notNull(), // JSON describing how to earn
+  pointsReward: int("pointsReward").default(0).notNull(), // TreePoints awarded
+  rarity: mysqlEnum("rarity", ["common", "rare", "epic", "legendary"]).default("common").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = typeof badges.$inferInsert;
+
+/**
+ * User Badges - Junction table for user-badge relationships
+ */
+export const userBadges = mysqlTable("user_badges", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  badgeId: int("badgeId").notNull(),
+  earnedAt: timestamp("earnedAt").defaultNow().notNull(),
+  notified: boolean("notified").default(false).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(), // For showcase ordering
+});
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = typeof userBadges.$inferInsert;
+
+
+/**
+ * Weekly Challenges - Rotating challenges with rewards
+ */
+export const weeklyChallenges = mysqlTable("weekly_challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  title: varchar("title", { length: 150 }).notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 50 }).notNull(),
+  color: varchar("color", { length: 20 }).notNull(),
+  category: mysqlEnum("category", [
+    "spending",     // Track/reduce spending
+    "savings",      // Savings goals
+    "education",    // Complete tutorials
+    "engagement",   // Daily logins/activity
+    "social",       // Referrals/sharing
+    "fwi"           // Improve FWI score
+  ]).notNull(),
+  targetValue: int("targetValue").notNull(), // Goal to achieve
+  targetUnit: varchar("targetUnit", { length: 30 }).notNull(), // 'transactions', 'points', 'days', etc.
+  pointsReward: int("pointsReward").notNull(),
+  badgeReward: varchar("badgeReward", { length: 50 }), // Optional badge code to award
+  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).default("medium").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WeeklyChallenge = typeof weeklyChallenges.$inferSelect;
+export type InsertWeeklyChallenge = typeof weeklyChallenges.$inferInsert;
+
+/**
+ * Active Challenge Instances - Currently running challenges
+ */
+export const activeChallenges = mysqlTable("active_challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  challengeId: int("challengeId").notNull(),
+  weekNumber: int("weekNumber").notNull(), // ISO week number
+  year: int("year").notNull(),
+  startsAt: timestamp("startsAt").notNull(),
+  endsAt: timestamp("endsAt").notNull(),
+  participantCount: int("participantCount").default(0).notNull(),
+  completionCount: int("completionCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ActiveChallenge = typeof activeChallenges.$inferSelect;
+export type InsertActiveChallenge = typeof activeChallenges.$inferInsert;
+
+/**
+ * User Challenge Progress - Track individual user progress
+ */
+export const userChallengeProgress = mysqlTable("user_challenge_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  activeChallengeId: int("activeChallengeId").notNull(),
+  currentProgress: int("currentProgress").default(0).notNull(),
+  isCompleted: boolean("isCompleted").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+  pointsAwarded: int("pointsAwarded").default(0).notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserChallengeProgress = typeof userChallengeProgress.$inferSelect;
+export type InsertUserChallengeProgress = typeof userChallengeProgress.$inferInsert;
+
+/**
+ * User Profile Settings - Privacy and display preferences
+ */
+export const userProfileSettings = mysqlTable("user_profile_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  showBadges: boolean("showBadges").default(true).notNull(),
+  showLevel: boolean("showLevel").default(true).notNull(),
+  showFwiScore: boolean("showFwiScore").default(false).notNull(), // Private by default
+  showStreak: boolean("showStreak").default(true).notNull(),
+  showLeaderboardRank: boolean("showLeaderboardRank").default(true).notNull(),
+  bio: varchar("bio", { length: 300 }),
+  avatarUrl: text("avatarUrl"),
+  featuredBadges: text("featuredBadges"), // JSON array of badge IDs to showcase
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserProfileSettings = typeof userProfileSettings.$inferSelect;
+export type InsertUserProfileSettings = typeof userProfileSettings.$inferInsert;
+
+/**
+ * Streak History - Track daily activity for streak badges
+ */
+export const streakHistory = mysqlTable("streak_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  activityDate: timestamp("activityDate").notNull(),
+  activityType: mysqlEnum("activityType", [
+    "login",
+    "transaction",
+    "tutorial",
+    "challenge",
+    "goal_update"
+  ]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StreakHistory = typeof streakHistory.$inferSelect;
+export type InsertStreakHistory = typeof streakHistory.$inferInsert;

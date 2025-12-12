@@ -22,7 +22,11 @@ import {
   departmentAlertHistory, InsertDepartmentAlertHistory,
   leads, InsertLead,
   monthlyMetricsSnapshots, InsertMonthlyMetricsSnapshot,
-  organizationAlertThresholds, InsertOrganizationAlertThreshold
+  organizationAlertThresholds, InsertOrganizationAlertThreshold,
+  offerRedemptions, InsertOfferRedemption,
+  educationProgress, InsertEducationProgress,
+  badges, Badge, InsertBadge,
+  userBadges, UserBadge, InsertUserBadge
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -2184,4 +2188,773 @@ export async function getDefaultThresholds() {
     notifySlackWebhook: null as string | null,
     notifyEmails: null as string | null,
   };
+}
+
+
+// ============================================
+// OFFER REDEMPTIONS (COUPONS)
+// ============================================
+
+export async function createOfferRedemption(data: {
+  offerId: number;
+  userId: number;
+  merchantId: number;
+  pointsSpent: number;
+  qrCodeData?: string;
+  expiresAt?: Date;
+}): Promise<{ id: number; couponCode: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const couponCode = `TV-${nanoid(8).toUpperCase()}`;
+  const expiresAt = data.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days default
+  
+  const result = await db.insert(offerRedemptions).values({
+    ...data,
+    couponCode,
+    expiresAt,
+  });
+  
+  return { id: result[0].insertId, couponCode };
+}
+
+export async function getRedemptionByCouponCode(couponCode: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(offerRedemptions)
+    .where(eq(offerRedemptions.couponCode, couponCode))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function validateCoupon(couponCode: string, merchantId: number, validatedBy: number): Promise<{
+  success: boolean;
+  message: string;
+  redemption?: any;
+  user?: any;
+  offer?: any;
+}> {
+  const db = await getDb();
+  if (!db) return { success: false, message: "Base de datos no disponible" };
+  
+  // Find redemption
+  const redemption = await getRedemptionByCouponCode(couponCode);
+  if (!redemption) {
+    return { success: false, message: "Cupón no encontrado" };
+  }
+  
+  // Check if already validated
+  if (redemption.status === 'validated') {
+    return { success: false, message: "Este cupón ya fue utilizado" };
+  }
+  
+  // Check if expired
+  if (redemption.expiresAt && new Date(redemption.expiresAt) < new Date()) {
+    return { success: false, message: "Este cupón ha expirado" };
+  }
+  
+  // Check if cancelled
+  if (redemption.status === 'cancelled') {
+    return { success: false, message: "Este cupón fue cancelado" };
+  }
+  
+  // Check if belongs to this merchant
+  if (redemption.merchantId !== merchantId) {
+    return { success: false, message: "Este cupón no pertenece a tu comercio" };
+  }
+  
+  // Validate the coupon
+  await db.update(offerRedemptions)
+    .set({
+      status: 'validated',
+      validatedAt: new Date(),
+      validatedBy,
+    })
+    .where(eq(offerRedemptions.id, redemption.id));
+  
+  // Get user and offer info
+  const user = await getUserById(redemption.userId);
+  const offer = await db.select().from(marketOffers).where(eq(marketOffers.id, redemption.offerId)).limit(1);
+  
+  // Update offer conversion count
+  if (offer.length > 0) {
+    await db.update(marketOffers)
+      .set({ totalConversions: sql`${marketOffers.totalConversions} + 1` })
+      .where(eq(marketOffers.id, redemption.offerId));
+  }
+  
+  return {
+    success: true,
+    message: "Cupón validado exitosamente",
+    redemption,
+    user: user ? { id: user.id, name: user.name } : null,
+    offer: offer.length > 0 ? { id: offer[0].id, title: offer[0].title } : null,
+  };
+}
+
+export async function getUserRedemptions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(offerRedemptions)
+    .where(eq(offerRedemptions.userId, userId))
+    .orderBy(desc(offerRedemptions.createdAt));
+}
+
+export async function getMerchantRedemptions(merchantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(offerRedemptions)
+    .where(eq(offerRedemptions.merchantId, merchantId))
+    .orderBy(desc(offerRedemptions.createdAt));
+}
+
+// ============================================
+// EDUCATION PROGRESS
+// ============================================
+
+export async function getEducationProgress(userId: number, tutorialType: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(educationProgress)
+    .where(and(
+      eq(educationProgress.userId, userId),
+      eq(educationProgress.tutorialType, tutorialType)
+    ))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getAllEducationProgress(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(educationProgress)
+    .where(eq(educationProgress.userId, userId));
+}
+
+export async function updateEducationProgress(userId: number, tutorialType: string, stepsCompleted: number, totalSteps: number): Promise<{
+  progress: any;
+  justCompleted: boolean;
+  pointsAwarded: number;
+}> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const isCompleted = stepsCompleted >= totalSteps;
+  const pointsMap: Record<string, number> = {
+    'fwi': 50,
+    'ewa': 50,
+    'b2b': 100,
+    'merchant': 100,
+  };
+  const pointsToAward = isCompleted ? (pointsMap[tutorialType] || 50) : 0;
+  
+  // Check if already exists
+  const existing = await getEducationProgress(userId, tutorialType);
+  
+  if (existing) {
+    // Don't award points again if already completed
+    if (existing.isCompleted) {
+      return { progress: existing, justCompleted: false, pointsAwarded: 0 };
+    }
+    
+    await db.update(educationProgress)
+      .set({
+        stepsCompleted,
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+        pointsAwarded: isCompleted ? pointsToAward : 0,
+      })
+      .where(eq(educationProgress.id, existing.id));
+    
+    // Award TreePoints if just completed
+    if (isCompleted && !existing.isCompleted) {
+      await db.update(users)
+        .set({ treePoints: sql`${users.treePoints} + ${pointsToAward}` })
+        .where(eq(users.id, userId));
+    }
+    
+    return {
+      progress: { ...existing, stepsCompleted, isCompleted },
+      justCompleted: isCompleted && !existing.isCompleted,
+      pointsAwarded: isCompleted && !existing.isCompleted ? pointsToAward : 0,
+    };
+  }
+  
+  // Create new progress
+  const result = await db.insert(educationProgress).values({
+    userId,
+    tutorialType,
+    stepsCompleted,
+    totalSteps,
+    isCompleted,
+    completedAt: isCompleted ? new Date() : undefined,
+    pointsAwarded: isCompleted ? pointsToAward : 0,
+  });
+  
+  // Award TreePoints if completed on first try
+  if (isCompleted) {
+    await db.update(users)
+      .set({ treePoints: sql`${users.treePoints} + ${pointsToAward}` })
+      .where(eq(users.id, userId));
+  }
+  
+  return {
+    progress: { id: result[0].insertId, userId, tutorialType, stepsCompleted, totalSteps, isCompleted },
+    justCompleted: isCompleted,
+    pointsAwarded: isCompleted ? pointsToAward : 0,
+  };
+}
+
+
+// ============================================
+// BADGES FUNCTIONS
+// ============================================
+
+export async function getAllBadges(): Promise<Badge[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(badges).where(eq(badges.isActive, true)).orderBy(badges.category, badges.rarity);
+}
+
+export async function getBadgeByCode(code: string): Promise<Badge | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(badges)
+    .where(eq(badges.code, code))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getUserBadges(userId: number): Promise<(UserBadge & { badge: Badge })[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({
+    id: userBadges.id,
+    userId: userBadges.userId,
+    badgeId: userBadges.badgeId,
+    earnedAt: userBadges.earnedAt,
+    notified: userBadges.notified,
+    displayOrder: userBadges.displayOrder,
+    badge: badges,
+  })
+    .from(userBadges)
+    .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+    .where(eq(userBadges.userId, userId))
+    .orderBy(userBadges.displayOrder, desc(userBadges.earnedAt));
+  
+  return result as any;
+}
+
+export async function hasBadge(userId: number, badgeCode: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const badge = await db.select()
+    .from(badges)
+    .where(eq(badges.code, badgeCode))
+    .limit(1);
+  
+  if (badge.length === 0) return false;
+  
+  const userBadge = await db.select()
+    .from(userBadges)
+    .where(and(
+      eq(userBadges.userId, userId),
+      eq(userBadges.badgeId, badge[0].id)
+    ))
+    .limit(1);
+  
+  return userBadge.length > 0;
+}
+
+export async function awardBadge(userId: number, badgeCode: string): Promise<{ success: boolean; badge?: Badge; pointsAwarded?: number; alreadyHad?: boolean }> {
+  const db = await getDb();
+  if (!db) return { success: false };
+  
+  // Check if badge exists
+  const badgeResult = await db.select()
+    .from(badges)
+    .where(eq(badges.code, badgeCode))
+    .limit(1);
+  
+  if (badgeResult.length === 0) return { success: false };
+  
+  const badge = badgeResult[0];
+  
+  // Check if already has badge
+  const existing = await db.select()
+    .from(userBadges)
+    .where(and(
+      eq(userBadges.userId, userId),
+      eq(userBadges.badgeId, badge.id)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) return { success: true, badge, alreadyHad: true };
+  
+  // Award badge
+  await db.insert(userBadges).values({
+    userId,
+    badgeId: badge.id,
+    notified: false,
+  });
+  
+  // Award TreePoints if badge has reward
+  if (badge.pointsReward > 0) {
+    await db.update(users)
+      .set({ treePoints: sql`${users.treePoints} + ${badge.pointsReward}` })
+      .where(eq(users.id, userId));
+    
+    // Record points transaction
+    await db.insert(treePointsTransactions).values({
+      userId,
+      amount: badge.pointsReward,
+      type: 'bonus',
+      reason: `Insignia obtenida: ${badge.name}`,
+    });
+  }
+  
+  return { success: true, badge, pointsAwarded: badge.pointsReward, alreadyHad: false };
+}
+
+export async function markBadgeNotified(userId: number, badgeId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(userBadges)
+    .set({ notified: true })
+    .where(and(
+      eq(userBadges.userId, userId),
+      eq(userBadges.badgeId, badgeId)
+    ));
+}
+
+export async function getUnnotifiedBadges(userId: number): Promise<(UserBadge & { badge: Badge })[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({
+    id: userBadges.id,
+    userId: userBadges.userId,
+    badgeId: userBadges.badgeId,
+    earnedAt: userBadges.earnedAt,
+    notified: userBadges.notified,
+    displayOrder: userBadges.displayOrder,
+    badge: badges,
+  })
+    .from(userBadges)
+    .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+    .where(and(
+      eq(userBadges.userId, userId),
+      eq(userBadges.notified, false)
+    ));
+  
+  return result as any;
+}
+
+// ============================================
+// ENHANCED LEADERBOARD FUNCTIONS
+// ============================================
+
+export async function getTreePointsLeaderboard(options: {
+  limit?: number;
+  departmentId?: number;
+  period?: 'all' | 'month' | 'week';
+}): Promise<{
+  rank: number;
+  userId: number;
+  name: string | null;
+  treePoints: number;
+  level: number;
+  fwiScore: number;
+  departmentId: number | null;
+  departmentName?: string;
+}[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { limit = 10, departmentId, period = 'all' } = options;
+  
+  // Build conditions
+  const conditions = [eq(users.role, 'employee')];
+  if (departmentId) {
+    conditions.push(eq(users.departmentId, departmentId));
+  }
+  
+  const result = await db.select({
+    userId: users.id,
+    name: users.name,
+    treePoints: users.treePoints,
+    level: users.level,
+    fwiScore: users.fwiScore,
+    departmentId: users.departmentId,
+  })
+    .from(users)
+    .where(and(...conditions))
+    .orderBy(desc(users.treePoints))
+    .limit(limit);
+  
+  // Add rank with default values for null fields
+  return result.map((user, index) => ({
+    rank: index + 1,
+    userId: user.userId,
+    name: user.name,
+    treePoints: user.treePoints ?? 0,
+    level: user.level ?? 1,
+    fwiScore: user.fwiScore ?? 50,
+    departmentId: user.departmentId,
+  }));
+}
+
+export async function getUserLeaderboardPosition(userId: number, departmentId?: number): Promise<{
+  rank: number;
+  totalUsers: number;
+  percentile: number;
+}> {
+  const db = await getDb();
+  if (!db) return { rank: 0, totalUsers: 0, percentile: 0 };
+  
+  // Get user's points
+  const userResult = await db.select({ treePoints: users.treePoints })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  if (userResult.length === 0) return { rank: 0, totalUsers: 0, percentile: 0 };
+  
+  const userPoints = userResult[0].treePoints || 0;
+  
+  // Build conditions
+  const conditions = [eq(users.role, 'employee')];
+  if (departmentId) {
+    conditions.push(eq(users.departmentId, departmentId));
+  }
+  
+  // Count users with more points
+  const higherResult = await db.select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(and(...conditions, gt(users.treePoints, userPoints)));
+  
+  const higherCount = Number(higherResult[0]?.count || 0);
+  
+  // Count total users
+  const totalResult = await db.select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(and(...conditions));
+  
+  const totalUsers = Number(totalResult[0]?.count || 0);
+  
+  const rank = higherCount + 1;
+  const percentile = totalUsers > 0 ? Math.round(((totalUsers - rank + 1) / totalUsers) * 100) : 0;
+  
+  return { rank, totalUsers, percentile };
+}
+
+export async function getDepartmentLeaderboard(limit: number = 10): Promise<{
+  rank: number;
+  departmentId: number;
+  name: string;
+  avgFwiScore: number;
+  totalTreePoints: number;
+  employeeCount: number;
+}[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({
+    departmentId: departments.id,
+    name: departments.name,
+    avgFwiScore: departments.avgFwiScore,
+    employeeCount: departments.employeeCount,
+  })
+    .from(departments)
+    .orderBy(desc(departments.avgFwiScore))
+    .limit(limit);
+  
+  // Calculate total TreePoints per department
+  const withPoints = await Promise.all(result.map(async (dept, index) => {
+    const pointsResult = await db.select({ total: sql<number>`COALESCE(SUM(${users.treePoints}), 0)` })
+      .from(users)
+      .where(eq(users.departmentId, dept.departmentId));
+    
+    return {
+      rank: index + 1,
+      departmentId: dept.departmentId,
+      name: dept.name,
+      avgFwiScore: dept.avgFwiScore ?? 50,
+      employeeCount: dept.employeeCount ?? 0,
+      totalTreePoints: Number(pointsResult[0]?.total || 0),
+    };
+  }));
+  
+  return withPoints;
+}
+
+// ============================================
+// BADGE CHECKING HELPERS
+// ============================================
+
+export async function checkAndAwardEducationBadges(userId: number): Promise<Badge[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const awardedBadges: Badge[] = [];
+  
+  // Get user's education progress
+  const progress = await db.select()
+    .from(educationProgress)
+    .where(and(
+      eq(educationProgress.userId, userId),
+      eq(educationProgress.isCompleted, true)
+    ));
+  
+  const completedTypes = progress.map(p => p.tutorialType);
+  
+  // Check for FWI Master badge (completed FWI tutorials)
+  if (completedTypes.includes('fwi')) {
+    const result = await awardBadge(userId, 'fwi_master');
+    if (result.success && result.badge && !result.alreadyHad) {
+      awardedBadges.push(result.badge);
+    }
+  }
+  
+  // Check for EWA Expert badge
+  if (completedTypes.includes('ewa')) {
+    const result = await awardBadge(userId, 'ewa_expert');
+    if (result.success && result.badge && !result.alreadyHad) {
+      awardedBadges.push(result.badge);
+    }
+  }
+  
+  // Check for B2B Champion badge
+  if (completedTypes.includes('b2b')) {
+    const result = await awardBadge(userId, 'b2b_champion');
+    if (result.success && result.badge && !result.alreadyHad) {
+      awardedBadges.push(result.badge);
+    }
+  }
+  
+  // Check for Merchant Pro badge
+  if (completedTypes.includes('merchant')) {
+    const result = await awardBadge(userId, 'merchant_pro');
+    if (result.success && result.badge && !result.alreadyHad) {
+      awardedBadges.push(result.badge);
+    }
+  }
+  
+  // Check for Education Champion badge (all tutorials completed)
+  const allTypes = ['fwi', 'ewa', 'b2b', 'merchant'];
+  const hasAllBasic = allTypes.filter(t => completedTypes.includes(t)).length >= 2;
+  if (hasAllBasic) {
+    const result = await awardBadge(userId, 'education_champion');
+    if (result.success && result.badge && !result.alreadyHad) {
+      awardedBadges.push(result.badge);
+    }
+  }
+  
+  return awardedBadges;
+}
+
+// ============================================
+// SEED BADGES
+// ============================================
+
+export async function seedBadges(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const badgesToSeed: InsertBadge[] = [
+    // Education badges
+    {
+      code: 'fwi_master',
+      name: 'FWI Master',
+      description: 'Completaste el tutorial de FWI Score y dominas los conceptos de bienestar financiero',
+      icon: 'TrendingUp',
+      color: 'emerald',
+      category: 'education',
+      requirement: JSON.stringify({ type: 'tutorial_complete', tutorialType: 'fwi' }),
+      pointsReward: 100,
+      rarity: 'common',
+    },
+    {
+      code: 'ewa_expert',
+      name: 'EWA Expert',
+      description: 'Completaste el tutorial de Adelanto de Sueldo y sabes usar esta herramienta responsablemente',
+      icon: 'Wallet',
+      color: 'blue',
+      category: 'education',
+      requirement: JSON.stringify({ type: 'tutorial_complete', tutorialType: 'ewa' }),
+      pointsReward: 100,
+      rarity: 'common',
+    },
+    {
+      code: 'b2b_champion',
+      name: 'B2B Champion',
+      description: 'Dominaste la Torre de Control y puedes gestionar el bienestar financiero de tu equipo',
+      icon: 'Building2',
+      color: 'purple',
+      category: 'b2b',
+      requirement: JSON.stringify({ type: 'tutorial_complete', tutorialType: 'b2b' }),
+      pointsReward: 150,
+      rarity: 'rare',
+    },
+    {
+      code: 'merchant_pro',
+      name: 'Merchant Pro',
+      description: 'Completaste el tutorial del Marketplace y estás listo para maximizar tus conversiones',
+      icon: 'Store',
+      color: 'amber',
+      category: 'merchant',
+      requirement: JSON.stringify({ type: 'tutorial_complete', tutorialType: 'merchant' }),
+      pointsReward: 150,
+      rarity: 'rare',
+    },
+    {
+      code: 'education_champion',
+      name: 'Campeón del Aprendizaje',
+      description: 'Completaste múltiples tutoriales y demuestras compromiso con tu educación financiera',
+      icon: 'GraduationCap',
+      color: 'yellow',
+      category: 'education',
+      requirement: JSON.stringify({ type: 'tutorials_count', count: 2 }),
+      pointsReward: 250,
+      rarity: 'epic',
+    },
+    // Financial badges
+    {
+      code: 'fwi_healthy',
+      name: 'Finanzas Saludables',
+      description: 'Alcanzaste un FWI Score de 70 o más',
+      icon: 'Heart',
+      color: 'green',
+      category: 'financial',
+      requirement: JSON.stringify({ type: 'fwi_score', minScore: 70 }),
+      pointsReward: 200,
+      rarity: 'rare',
+    },
+    {
+      code: 'fwi_optimal',
+      name: 'Finanzas Óptimas',
+      description: 'Alcanzaste un FWI Score de 85 o más - ¡Eres un ejemplo a seguir!',
+      icon: 'Crown',
+      color: 'yellow',
+      category: 'financial',
+      requirement: JSON.stringify({ type: 'fwi_score', minScore: 85 }),
+      pointsReward: 500,
+      rarity: 'legendary',
+    },
+    {
+      code: 'goal_achiever',
+      name: 'Cumplidor de Metas',
+      description: 'Completaste tu primera meta financiera',
+      icon: 'Target',
+      color: 'teal',
+      category: 'financial',
+      requirement: JSON.stringify({ type: 'goals_completed', count: 1 }),
+      pointsReward: 150,
+      rarity: 'common',
+    },
+    {
+      code: 'goal_master',
+      name: 'Maestro de Metas',
+      description: 'Completaste 5 metas financieras',
+      icon: 'Trophy',
+      color: 'orange',
+      category: 'financial',
+      requirement: JSON.stringify({ type: 'goals_completed', count: 5 }),
+      pointsReward: 400,
+      rarity: 'epic',
+    },
+    // Engagement badges
+    {
+      code: 'streak_week',
+      name: 'Racha Semanal',
+      description: 'Mantuviste una racha de 7 días consecutivos',
+      icon: 'Flame',
+      color: 'orange',
+      category: 'engagement',
+      requirement: JSON.stringify({ type: 'streak_days', days: 7 }),
+      pointsReward: 100,
+      rarity: 'common',
+    },
+    {
+      code: 'streak_month',
+      name: 'Racha Mensual',
+      description: 'Mantuviste una racha de 30 días consecutivos',
+      icon: 'Zap',
+      color: 'yellow',
+      category: 'engagement',
+      requirement: JSON.stringify({ type: 'streak_days', days: 30 }),
+      pointsReward: 300,
+      rarity: 'rare',
+    },
+    {
+      code: 'early_adopter',
+      name: 'Early Adopter',
+      description: 'Te uniste a Treevü en sus primeros días',
+      icon: 'Sparkles',
+      color: 'pink',
+      category: 'engagement',
+      requirement: JSON.stringify({ type: 'registration_date', before: '2025-03-01' }),
+      pointsReward: 500,
+      rarity: 'legendary',
+    },
+    // Social badges
+    {
+      code: 'first_referral',
+      name: 'Embajador',
+      description: 'Referiste a tu primer amigo a Treevü',
+      icon: 'Users',
+      color: 'indigo',
+      category: 'social',
+      requirement: JSON.stringify({ type: 'referrals_count', count: 1 }),
+      pointsReward: 200,
+      rarity: 'common',
+    },
+    {
+      code: 'super_referrer',
+      name: 'Super Referidor',
+      description: 'Referiste a 5 amigos a Treevü',
+      icon: 'UserPlus',
+      color: 'violet',
+      category: 'social',
+      requirement: JSON.stringify({ type: 'referrals_count', count: 5 }),
+      pointsReward: 500,
+      rarity: 'epic',
+    },
+  ];
+  
+  for (const badge of badgesToSeed) {
+    try {
+      // Check if badge already exists
+      const existing = await db.select()
+        .from(badges)
+        .where(eq(badges.code, badge.code))
+        .limit(1);
+      
+      if (existing.length === 0) {
+        await db.insert(badges).values(badge);
+        console.log(`[Badges] Created badge: ${badge.code}`);
+      }
+    } catch (error) {
+      console.error(`[Badges] Error creating badge ${badge.code}:`, error);
+    }
+  }
 }

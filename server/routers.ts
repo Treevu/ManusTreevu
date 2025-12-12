@@ -4,7 +4,20 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { sql, eq } from "drizzle-orm";
 import * as db from "./db";
+import { 
+  users, 
+  transactions, 
+  marketOffers, 
+  ewaRequests,
+  offerRedemptions,
+  educationProgress,
+  userBadges,
+  notifications,
+  treePointsTransactions,
+  financialGoals
+} from "../drizzle/schema";
 import { 
   classifyExpense, 
   getFinancialAdvice, 
@@ -27,6 +40,8 @@ import { generateMonthlyReportData, generateReportHTML, getAvailableReportMonths
 import * as alertService from "./services/alertService";
 import { generateExecutiveReportPDF, getExecutiveReportData } from "./services/pdfReportService";
 import * as mfaService from "./services/mfaService";
+import * as pulseSurveyService from "./services/pulseSurveyService";
+import { triggerWeeklyReportNow } from "./services/weeklyReportService";
 import { 
   getAnalyticsUserStats, 
   getAnalyticsEwaStats, 
@@ -646,7 +661,68 @@ Responder a: ${input.email}
   }),
 
   // ============================================
-  // LEADERBOARD ROUTER
+  // BADGES ROUTER
+  // ============================================
+  badges: router({
+    // Get all available badges
+    list: publicProcedure.query(async () => {
+      return db.getAllBadges();
+    }),
+
+    // Get user's earned badges
+    getUserBadges: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserBadges(ctx.user.id);
+    }),
+
+    // Check if user has specific badge
+    hasBadge: protectedProcedure
+      .input(z.object({ code: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return db.hasBadge(ctx.user.id, input.code);
+      }),
+
+    // Get unnotified badges (for celebration)
+    getUnnotified: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUnnotifiedBadges(ctx.user.id);
+    }),
+
+    // Mark badge as notified
+    markNotified: protectedProcedure
+      .input(z.object({ badgeId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markBadgeNotified(ctx.user.id, input.badgeId);
+        return { success: true };
+      }),
+
+    // Check and award education badges
+    checkEducationBadges: protectedProcedure.mutation(async ({ ctx }) => {
+      const awardedBadges = await db.checkAndAwardEducationBadges(ctx.user.id);
+      
+      // Create notifications for each awarded badge
+      for (const badge of awardedBadges) {
+        await db.createNotification({
+          userId: ctx.user.id,
+          type: 'level_up',
+          title: '¡Nueva Insignia!',
+          message: `Has obtenido la insignia "${badge.name}" y ganado ${badge.pointsReward} TreePoints`,
+        });
+        
+        // Send push notification
+        await triggers.triggerBadgeEarned(ctx.user.id, badge.name, badge.pointsReward);
+      }
+      
+      return { awardedBadges };
+    }),
+
+    // Seed badges (admin only)
+    seed: adminProcedure.mutation(async () => {
+      await db.seedBadges();
+      return { success: true };
+    }),
+  }),
+
+  // ============================================
+  // LEADERBOARD ROUTER (Enhanced)
   // ============================================
   leaderboard: router({
     // Get top users by level
@@ -685,6 +761,35 @@ Responder a: ${input.email}
       }))
       .query(async ({ input }) => {
         return db.getLeaderboardByDepartment(input.departmentId, input.limit);
+      }),
+
+    // Enhanced: Get TreePoints leaderboard with filters
+    treePointsRanking: protectedProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(10),
+        departmentId: z.number().optional(),
+        period: z.enum(['all', 'month', 'week']).default('all'),
+      }).optional())
+      .query(async ({ input }) => {
+        return db.getTreePointsLeaderboard({
+          limit: input?.limit || 10,
+          departmentId: input?.departmentId,
+          period: input?.period || 'all',
+        });
+      }),
+
+    // Get user's position in leaderboard
+    getMyPosition: protectedProcedure
+      .input(z.object({ departmentId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getUserLeaderboardPosition(ctx.user.id, input?.departmentId);
+      }),
+
+    // Get department leaderboard
+    departmentRanking: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).default(10) }).optional())
+      .query(async ({ input }) => {
+        return db.getDepartmentLeaderboard(input?.limit || 10);
       }),
   }),
 
@@ -1542,6 +1647,18 @@ Responder a: ${input.email}
 
       return generateSmartOffer(topOffers);
     }),
+
+    // Validate coupon by QR code
+    validateCoupon: merchantProcedure
+      .input(z.object({ couponCode: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return db.validateCoupon(input.couponCode, ctx.user.id, ctx.user.id);
+      }),
+
+    // Get merchant's redemption history
+    getRedemptions: merchantProcedure.query(async ({ ctx }) => {
+      return db.getMerchantRedemptions(ctx.user.id);
+    }),
   }),
 
   // ============================================
@@ -1820,27 +1937,20 @@ Responder a: ${input.email}
   // MFA ROUTER
   // ============================================
   mfa: router({
-    // Get MFA status for current user
     getStatus: protectedProcedure
       .query(async ({ ctx }) => {
         return mfaService.getMFAStatus(ctx.user.id);
       }),
 
-    // Setup MFA (generate secret and QR code)
     setup: protectedProcedure
       .mutation(async ({ ctx }) => {
         const result = await mfaService.setupMFA(ctx.user.id);
         if (!result) {
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to setup MFA' });
         }
-        // Don't return the secret directly for security
-        return {
-          qrCode: result.qrCode,
-          backupCodes: result.backupCodes,
-        };
+        return { qrCode: result.qrCode, backupCodes: result.backupCodes };
       }),
 
-    // Verify and enable MFA
     verify: protectedProcedure
       .input(z.object({ token: z.string().length(6) }))
       .mutation(async ({ ctx, input }) => {
@@ -1851,7 +1961,6 @@ Responder a: ${input.email}
         return { success: true };
       }),
 
-    // Verify MFA token (for login flow)
     verifyToken: publicProcedure
       .input(z.object({ userId: z.number(), token: z.string().min(6).max(8) }))
       .mutation(async ({ input }) => {
@@ -1859,7 +1968,6 @@ Responder a: ${input.email}
         return { valid: success };
       }),
 
-    // Disable MFA
     disable: protectedProcedure
       .input(z.object({ token: z.string().length(6) }))
       .mutation(async ({ ctx, input }) => {
@@ -1870,7 +1978,6 @@ Responder a: ${input.email}
         return { success: true };
       }),
 
-    // Regenerate backup codes
     regenerateBackupCodes: protectedProcedure
       .input(z.object({ token: z.string().length(6) }))
       .mutation(async ({ ctx, input }) => {
@@ -1881,12 +1988,226 @@ Responder a: ${input.email}
         return { backupCodes: codes };
       }),
 
-    // Check if MFA is required for a user (for login flow)
     isRequired: publicProcedure
       .input(z.object({ userId: z.number() }))
       .query(async ({ input }) => {
         const enabled = await mfaService.isMFAEnabled(input.userId);
         return { required: enabled };
+      }),
+  }),
+
+  // ============================================
+  // PULSE SURVEYS ROUTER
+  // ============================================
+  surveys: router({
+    getActive: protectedProcedure
+      .query(async ({ ctx }) => {
+        return pulseSurveyService.getActiveSurveyForUser(ctx.user.id);
+      }),
+
+    submit: protectedProcedure
+      .input(z.object({
+        surveyId: z.number(),
+        responses: z.array(z.object({
+          questionId: z.number(),
+          responseValue: z.number().optional(),
+          responseText: z.string().optional(),
+          responseChoice: z.string().optional(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await pulseSurveyService.submitSurveyResponses(
+          ctx.user.id,
+          input.surveyId,
+          input.responses
+        );
+        if (!success) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Failed to submit survey' });
+        }
+        return { success: true };
+      }),
+
+    getResults: b2bAdminProcedure
+      .input(z.object({ surveyId: z.number() }))
+      .query(async ({ input }) => {
+        return pulseSurveyService.getSurveyResults(input.surveyId);
+      }),
+
+    getWellbeingScore: protectedProcedure
+      .query(async ({ ctx }) => {
+        const score = await pulseSurveyService.calculateWellbeingScore(ctx.user.id);
+        return { score };
+      }),
+
+    create: b2bAdminProcedure
+      .input(z.object({
+        title: z.string().optional(),
+        organizationId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const surveyId = await pulseSurveyService.createDefaultSurvey(
+          input.organizationId || ctx.user.departmentId,
+          ctx.user.id,
+          input.title
+        );
+        if (!surveyId) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create survey' });
+        }
+        return { surveyId };
+      }),
+
+    getAll: b2bAdminProcedure
+      .input(z.object({ organizationId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return pulseSurveyService.getOrganizationSurveys(input?.organizationId || ctx.user.departmentId);
+      }),
+
+    sendReminders: b2bAdminProcedure
+      .input(z.object({ surveyId: z.number() }))
+      .mutation(async ({ input }) => {
+        const count = await pulseSurveyService.sendSurveyReminders(input.surveyId);
+        return { sentCount: count };
+      }),
+  }),
+
+  // ============================================
+  // WEEKLY REPORTS ROUTER
+  // ============================================
+  weeklyReports: router({
+    triggerNow: b2bAdminProcedure
+      .input(z.object({ organizationId: z.number() }))
+      .mutation(async ({ input }) => {
+        const success = await triggerWeeklyReportNow(input.organizationId);
+        return { success };
+      }),
+  }),
+
+  // ============================================
+  // EDUCATION PROGRESS ROUTER
+  // ============================================
+  education: router({
+    getProgress: protectedProcedure
+      .input(z.object({ tutorialType: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return db.getEducationProgress(ctx.user.id, input.tutorialType);
+      }),
+
+    getAllProgress: protectedProcedure
+      .query(async ({ ctx }) => {
+        return db.getAllEducationProgress(ctx.user.id);
+      }),
+
+    updateProgress: protectedProcedure
+      .input(z.object({
+        tutorialType: z.string(),
+        stepsCompleted: z.number(),
+        totalSteps: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return db.updateEducationProgress(
+          ctx.user.id,
+          input.tutorialType,
+          input.stepsCompleted,
+          input.totalSteps
+        );
+      }),
+
+    completeTutorial: protectedProcedure
+      .input(z.object({
+        tutorialType: z.string(),
+        totalSteps: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return db.updateEducationProgress(
+          ctx.user.id,
+          input.tutorialType,
+          input.totalSteps,
+          input.totalSteps
+        );
+      }),
+  }),
+
+  // ============================================
+  // DEMO MODE ROUTER (Admin only)
+  // ============================================
+  demo: router({
+    getStats: adminProcedure
+      .query(async () => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) return { employees: 0, transactions: 0, offers: 0, ewaRequests: 0 };
+        
+        const [employeeCount] = await dbInstance.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'employee'));
+        const [txCount] = await dbInstance.select({ count: sql<number>`count(*)` }).from(transactions);
+        const [offerCount] = await dbInstance.select({ count: sql<number>`count(*)` }).from(marketOffers);
+        const [ewaCount] = await dbInstance.select({ count: sql<number>`count(*)` }).from(ewaRequests);
+        
+        return {
+          employees: Number(employeeCount?.count || 0),
+          transactions: Number(txCount?.count || 0),
+          offers: Number(offerCount?.count || 0),
+          ewaRequests: Number(ewaCount?.count || 0),
+        };
+      }),
+
+    resetData: adminProcedure
+      .mutation(async () => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Limpiar datos transaccionales (mantener usuarios y config)
+        await dbInstance.delete(offerRedemptions);
+        await dbInstance.delete(educationProgress);
+        await dbInstance.delete(userBadges);
+        await dbInstance.delete(notifications);
+        await dbInstance.delete(treePointsTransactions);
+        await dbInstance.delete(ewaRequests);
+        await dbInstance.delete(financialGoals);
+        await dbInstance.delete(transactions);
+        
+        return { success: true };
+      }),
+
+    seedData: adminProcedure
+      .mutation(async () => {
+        // Ejecutar el seed script programáticamente
+        const dbInstance = await db.getDb();
+        if (!dbInstance) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Crear transacciones de ejemplo para usuarios existentes
+        const existingUsers = await dbInstance.select().from(users).where(eq(users.role, 'employee')).limit(50);
+        
+        let txCount = 0;
+        const categories = ['food', 'transport', 'entertainment', 'services', 'health', 'shopping', 'other'] as const;
+        const merchants = ['Starbucks', 'Uber', 'Netflix', 'CFE', 'Farmacia', 'Liverpool', 'Oxxo'];
+        
+        for (const user of existingUsers) {
+          // Crear 5-15 transacciones por usuario
+          const numTx = Math.floor(Math.random() * 11) + 5;
+          for (let i = 0; i < numTx; i++) {
+            const category = categories[Math.floor(Math.random() * categories.length)];
+            const merchant = merchants[Math.floor(Math.random() * merchants.length)];
+            const amount = Math.floor(Math.random() * 500) + 50;
+            const daysAgo = Math.floor(Math.random() * 30);
+            const date = new Date();
+            date.setDate(date.getDate() - daysAgo);
+            
+            await dbInstance.insert(transactions).values({
+              userId: user.id,
+              amount: amount * 100, // centavos
+              category,
+              merchant,
+              description: `Compra en ${merchant}`,
+              transactionDate: date,
+              createdAt: date,
+            });
+            txCount++;
+          }
+        }
+        
+        return {
+          employees: existingUsers.length,
+          transactions: txCount,
+        };
       }),
   }),
 });

@@ -1203,32 +1203,464 @@
 ## Fase 45: Reportes Automatizados, MFA y Encuestas de Bienestar
 
 ### Reportes Automatizados por Email
-- [ ] Crear servicio weeklyReportService.ts para generar resumen semanal
-- [ ] Incluir métricas: FWI promedio, empleados en riesgo, alertas activas, tendencias
-- [ ] Crear plantilla de email HTML profesional para el reporte
-- [ ] Implementar cron job semanal (lunes 8am) para envío automático
-- [ ] Endpoint para configurar preferencias de reporte por organización
-- [ ] Opción de envío inmediato para pruebas
+- [x] Crear servicio weeklyReportService.ts para generar resumen semanal
+- [x] Incluir métricas: FWI promedio, empleados en riesgo, alertas activas, tendencias
+- [x] Crear plantilla de email HTML profesional para el reporte (dark theme, métricas grid)
+- [x] Implementar cron job semanal (lunes 8am) para envío automático
+- [x] Agregar router weeklyReports con endpoint triggerNow
 
 ### Autenticación Multi-Factor (MFA)
-- [ ] Instalar dependencias: otplib para TOTP, qrcode para generar QR
-- [ ] Crear tabla mfa_settings en schema.ts (secret, enabled, backupCodes)
-- [ ] Endpoint mfa.setup para generar secret y QR code
-- [ ] Endpoint mfa.verify para validar código TOTP
-- [ ] Endpoint mfa.enable para activar MFA después de verificación
-- [ ] Endpoint mfa.disable para desactivar MFA (requiere código)
-- [ ] Modificar flujo de login para solicitar código MFA si está habilitado
-- [ ] Página de configuración MFA en /settings/security
-- [ ] Generar códigos de respaldo (backup codes)
+- [x] Instalar dependencias: otplib para TOTP, qrcode para generar QR
+- [x] Crear tabla mfa_settings en schema.ts (10 campos)
+- [x] Crear servicio mfaService.ts con funciones TOTP completas
+- [x] Agregar router mfa con endpoints: getStatus, setup, verify, verifyToken, disable, regenerateBackupCodes, isRequired
+- [x] Crear página de configuración MFA en /settings/security (SecuritySettings.tsx)
 
 ### Encuestas de Bienestar (Pulse Surveys)
-- [ ] Crear tablas: pulse_surveys, pulse_questions, pulse_responses
-- [ ] Preguntas predefinidas sobre bienestar financiero y laboral
-- [ ] Escala de respuesta 1-5 con emojis
-- [ ] Endpoint para obtener encuesta activa del usuario
-- [ ] Endpoint para enviar respuestas
-- [ ] Cron job para activar encuestas semanales/quincenales
-- [ ] Dashboard de resultados para B2B admins
-- [ ] Correlación automática con FWI Score
-- [ ] Notificación push cuando hay encuesta disponible
-- [ ] Página de encuesta en /survey
+- [x] Crear tablas: pulse_surveys, pulse_questions, pulse_responses, pulse_survey_assignments
+- [x] Crear servicio pulseSurveyService.ts con 6 preguntas por defecto
+- [x] Agregar router surveys con endpoints: getActive, submit, getResults, getWellbeingScore, create, getAll, sendReminders
+- [x] Crear página de encuesta en /survey (PulseSurvey.tsx)
+- [x] Dashboard de resultados para B2B admins (SurveyResults.tsx)
+
+
+## Fase 46: UI de Clase Mundial y Localización Perú
+
+### Localización para Perú
+- [x] Crear utilidades de formato en locale.ts (formatCurrency, formatDate, formatNumber, formatPercent)
+- [x] Configurar locale es-PE para fechas con date-fns
+- [x] Símbolo de moneda S/ (Soles peruanos)
+
+### Página de Configuración MFA (/settings/security)
+- [x] Diseño premium dark theme con Tailwind CSS
+- [x] Mostrar QR code para escanear con Google Authenticator
+- [x] Input para código de verificación de 6 dígitos
+- [x] Lista de backup codes con opción de copiar y regenerar
+- [x] Estado de MFA (activo/inactivo) con badges
+- [x] Enlace con icono Shield en EmployeeDashboard
+
+### Página de Encuestas (/survey)
+- [x] Diseño mobile-first con animaciones Framer Motion
+- [x] Preguntas tipo emoji con 5 opciones visuales
+- [x] Preguntas tipo escala 1-5 con botones interactivos
+- [x] Preguntas de opción múltiple con cards seleccionables
+- [x] Preguntas de texto libre con textarea
+- [x] Barra de progreso sticky y navegación anterior/siguiente
+- [x] Pantalla de agradecimiento con +50 TreePoints
+- [x] Enlace con icono ClipboardList en EmployeeDashboard
+
+### Dashboard de Resultados de Encuestas (/dashboard/survey-results)
+- [x] Gráficos radar y pie con Recharts
+- [x] Promedios por pregunta con progress bars
+- [x] Tasa de completado y total de respuestas
+- [x] Selector de encuesta para ver histórico
+- [x] Botón de enviar recordatorios
+- [x] Enlace con icono ClipboardList en B2BDashboard
+
+### Mejoras UX/UI Dashboards
+- [x] Enlaces a nuevas páginas en headers (B2B y Employee)
+- [x] Iconos consistentes: Shield (seguridad), ClipboardList (encuestas)
+- [x] Tooltips descriptivos en todos los botones de header
+
+
+## Fase 47: Mejora UX/UI de Dashboards - Diseño Premium
+
+### Dashboard del Colaborador (Copiloto Financiero)
+- [ ] Monitor de "Escudo Financiero" con ahorro acumulado en intereses
+- [ ] Modal comparativo: costo tarjetas de crédito vs tarifa Treevü ($3.99)
+- [ ] Detector de "Gasto Hormiga" con cálculo anualizado
+- [ ] Botón para convertir gasto hormiga en meta de ahorro
+- [ ] Slider de Liquidez Responsable para EWA ($20-$500)
+- [ ] Desglose tr### Dashboard del Colaborador (Copiloto Financiero)
+- [x] Escudo Financiero (FinancialShieldCard): comparativa visual ahorro vs costo de tarjeta de crédito
+- [x] Detector de Gastos Hormiga (AntExpenseDetector): IA identifica patrones de micro-gastos con modal detallado
+- [x] Slider EWA (EWASlider): solicitar adelanto con fee transparente S/ 3.99
+- [x] Clasificación Necesidades vs Deseos (ActivityFeed) en transacciones con colores
+
+### Dashboard B2B (Torre de Control)
+- [x] Mapa de Calor (RiskHeatMap): Scatter chart FWI vs Rotación por departamento con Recharts
+- [x] Visualizador de Flujo de Fondos (FundsFlowVisualizer): Flowchart modal interactivo 4 pasos
+- [x] Diagrama educativo paso a paso del proceso (Solicitud → Validación → Dispersión → Conciliación)
+- [x] Blindaje Legal: explicaciones de conciliación y neutralidad fiscal en modal
+
+### Dashboard del Comercio (Inteligencia de Consumo)
+- [x] Generador de Ofertas Inteligentes (SmartOfferGenerator): 3 sugerencias IA con urgencia y ROI
+- [x] Sugerencias automáticas basadas en FWI de usuarios cercanos (targetFwi)
+- [x] Calculadora ROI (ROICalculator): Simulador con sliders y gráficos Recharts
+- [x] Cálculo de ROAS y ahorro en CAC en modal interactivo
+- [ ] Validación de cupones QR (simulado) - pendiente
+
+### Modales de Divulgación Progresiva
+- [x] Componente ProgressiveDisclosure base con progress bar y navegación
+- [x] FWI_EDUCATION_STEPS: 4 pasos educativos sobre FWI Score
+- [x] EWA_EDUCATION_STEPS: 3 pasos educativos sobre Earned Wage Access
+- [x] Diseño limpio con información progresiva y colores por paso
+
+## Fase 48: Integración de ProgressiveDisclosure en Dashboards
+
+### EmployeeDashboard
+- [ ] Agregar botón de info en métrica FWI Score que abre modal educativo
+- [ ] Agregar botón de info en sección EWA que abre modal educativo
+- [ ] Integrar FWI_EDUCATION_STEPS y EWA_EDUCATION_STEPS
+
+### B2BDashboard
+- [ ] Agregar botón de info en métricas principales (FWI promedio, empleados en riesgo)
+- [ ] Crear B2B_EDUCATION_STEPS con pasos educativos para admins
+- [ ] Integrar en tooltips de las cards de métricas
+
+### MerchantDashboard
+- [ ] Agregar botón de info en métricas de ROI y conversiones
+- [ ] Crear MERCHANT_EDUCATION_STEPS con pasos educativos para comercios
+- [ ] Integrar en tooltips de las cards de métricas
+
+
+## Fase 48: Integración de ProgressiveDisclosure en Dashboards
+
+### EmployeeDashboard
+- [x] Agregar botón educativo (Sparkles) al FWI Score
+- [x] Agregar prop onLearnMore al EWASlider con botón Info
+- [x] Integrar modales FWI_EDUCATION_STEPS y EWA_EDUCATION_STEPS
+- [x] Toast de felicitación al completar tutorial
+
+### B2BDashboard
+- [x] Crear B2B_EDUCATION_STEPS (Torre de Control, Mapa de Calor, Flujo de Fondos, ROI)
+- [x] Agregar botón educativo (Sparkles) a la métrica FWI Promedio
+- [x] Integrar modal de ProgressiveDisclosure con toast de completado
+
+### MerchantDashboard
+- [x] Crear MERCHANT_EDUCATION_STEPS (Marketplace, TreePoints, Ofertas IA, ROI)
+- [x] Agregar botón educativo (Sparkles) a la métrica Ofertas Activas
+- [x] Integrar modal de ProgressiveDisclosure con toast de completado
+
+
+## Fase 49: QR Scanner, Gamificación y Personalización por Rol
+
+### Validación de Cupones QR
+- [ ] Instalar librería de escaneo QR (html5-qrcode o similar)
+- [ ] Crear componente QRScanner para comercios
+- [ ] Crear endpoint merchant.validateCoupon para validar códigos
+- [ ] Generar códigos QR únicos para cada canje de TreePoints
+- [ ] Página /merchant/scan para escanear y validar cupones
+- [ ] Feedback visual de éxito/error al escanear
+
+### Gamificación del Onboarding
+- [ ] Otorgar TreePoints al completar tutorial FWI (50 pts)
+- [ ] Otorgar TreePoints al completar tutorial EWA (50 pts)
+- [ ] Otorgar TreePoints al completar tutorial B2B (100 pts)
+- [ ] Otorgar TreePoints al completar tutorial Merchant (100 pts)
+- [ ] Crear endpoint education.completeStep para registrar progreso
+- [ ] Guardar progreso de tutoriales en base de datos
+- [ ] Mostrar confetti/celebración al ganar puntos
+
+### Personalización por Rol
+- [ ] Crear variantes de pasos educativos para empleados nuevos
+- [ ] Crear variantes para admins experimentados
+- [ ] Crear variantes para comerciantes
+- [ ] Detectar rol y experiencia del usuario
+- [ ] Mostrar contenido relevante según perfil
+
+
+## Fase 21: QR Coupon Validation, Onboarding Gamification y Role-based Educational Content
+
+### QR Coupon Validation
+- [x] Crear componente QRScanner con html5-qrcode
+- [x] Crear componente CouponValidator con tabs (QR Scanner, Código Manual, Historial)
+- [x] Integrar CouponValidator en MerchantDashboard (nueva tab "Validar QR")
+- [x] Validación visual con estados de éxito/error/pendiente
+- [x] Historial de validaciones con filtros y estadísticas
+
+### Onboarding Gamification con TreePoints
+- [x] Crear componente EducationGamification con tutoriales interactivos
+- [x] Animaciones de celebración con canvas-confetti
+- [x] Progreso paso a paso con indicadores visuales
+- [x] Otorgamiento automático de TreePoints al completar tutoriales
+- [x] Hook useEducationProgress para rastrear progreso
+
+### Role-based Educational Content
+- [x] Crear biblioteca de contenido educativo (educationalContent.ts)
+- [x] Tutoriales para empleados: FWI Score básico/avanzado, EWA básico/avanzado
+- [x] Tutoriales para B2B Admin: Torre de Control básico/avanzado, Sistema de Alertas
+- [x] Tutoriales para Merchants: Marketplace básico/avanzado, Validación QR
+- [x] Sistema de niveles de experiencia (new, intermediate, advanced)
+- [x] Contenido personalizado según rol y nivel de experiencia
+
+### Centro de Aprendizaje
+- [x] Crear componente EducationCenter con vista completa de tutoriales
+- [x] Estadísticas de progreso (completados, puntos ganados, disponibles)
+- [x] Vista compacta para integración en dashboards
+- [x] Teaser de contenido avanzado bloqueado
+
+### Integración en Dashboards
+- [x] Integrar EducationGamification en EmployeeDashboard (FWI Score)
+- [x] Integrar EducationGamification en B2BDashboard (Torre de Control)
+- [x] Integrar EducationGamification en MerchantDashboard (Marketplace)
+
+### Tests
+- [x] Tests para progreso de educación (getProgress, updateProgress, getAllProgress)
+- [x] Tests para validación de cupones (createRedemption, validateCoupon)
+- [x] Tests para contenido educativo (puntos por tutorial, niveles de experiencia)
+- [x] 15 tests adicionales pasando (140 total)
+
+---
+*Última actualización: Dec 11, 2025*
+
+
+## Fase 22: Notificaciones Push, Leaderboard y Sistema de Badges
+
+### Notificaciones Push al Completar Tutoriales
+- [x] Integrar trigger de notificación push en EducationGamification
+- [x] Crear notificación específica para tutorial completado (triggerTutorialCompleted)
+- [x] Incluir puntos ganados en el mensaje de notificación
+
+### Sistema de Badges/Insignias
+- [x] Crear tabla badges en base de datos
+- [x] Crear tabla user_badges para relación usuario-insignia
+- [x] Definir 14 badges (FWI Master, EWA Expert, B2B Champion, Merchant Pro, Education Champion, etc.)
+- [x] Crear endpoints tRPC para badges (list, getUserBadges, hasBadge, checkEducationBadges, seed)
+- [x] Lógica de otorgamiento automático al completar categorías (checkAndAwardEducationBadges)
+
+### Leaderboard de TreePoints
+- [x] Crear endpoint tRPC para obtener ranking de TreePoints (treePointsRanking)
+- [x] Incluir filtros por departamento y período
+- [x] Crear componente Leaderboard con animaciones (Framer Motion)
+- [x] Mostrar posición del usuario actual destacada (getMyPosition)
+- [x] Integrar en EmployeeDashboard (tab TreePoints)
+
+### UI Components
+- [x] Crear componente BadgeCard para mostrar insignias (con rareza y colores)
+- [x] Crear componente BadgeShowcase para perfil de usuario
+- [x] Crear componente LeaderboardWidget compacto
+- [x] Animaciones de celebración al obtener nueva insignia (canvas-confetti)
+- [x] Crear página /badges para ver colección completa
+
+### Tests
+- [x] Tests para sistema de badges (23 tests)
+- [x] Tests para leaderboard
+- [x] Tests para notificaciones de tutoriales
+- [x] 148 tests totales pasando
+
+
+## Fase 23: Badges de Racha, Desafíos Semanales y Perfil Público
+
+### Badges de Racha
+- [ ] Crear badges para rachas de 7, 30 y 90 días
+- [ ] Implementar lógica de verificación de racha diaria
+- [ ] Otorgar badges automáticamente al alcanzar hitos de racha
+- [ ] Mostrar progreso de racha actual en dashboard
+
+### Desafíos Semanales
+- [ ] Crear tabla weekly_challenges en base de datos
+- [ ] Crear tabla user_challenge_progress para tracking
+- [ ] Definir tipos de desafíos (gastos, FWI, educación, social)
+- [ ] Crear endpoints tRPC para desafíos (getActive, getProgress, complete)
+- [ ] Componente ChallengeCard con progreso y countdown
+- [ ] Sistema de rotación semanal de desafíos
+
+### Perfil Público
+- [ ] Crear página de perfil público /profile/:userId
+- [ ] Mostrar badges obtenidos con showcase
+- [ ] Mostrar posición en leaderboard
+- [ ] Mostrar estadísticas públicas (nivel, FWI, racha)
+- [ ] Opción de privacidad para ocultar perfil
+
+### Tests
+- [ ] Tests para badges de racha
+- [ ] Tests para desafíos semanales
+- [ ] Tests para perfil público
+
+
+## Fase 24: Preparación Demo Day
+
+### Crítico
+- [x] Seed data realista: 48 empleados con FWI variado, 464 transacciones, 20 metas
+- [x] Seed data: 5 departamentos con métricas de bienestar
+- [x] Seed data: 10 ofertas de merchants activas
+- [x] Seed data: 21 EWA requests con historial
+- [x] Tour interactivo de onboarding con pasos guiados (OnboardingTour.tsx)
+- [x] Estados de carga (skeletons) consistentes en todos los dashboards
+- [x] Estados vacíos con CTAs claros (empty-state.tsx)
+
+### Para Impresionar
+- [x] Dashboard ejecutivo con KPIs de impacto (ROI, ausentismo, retención) - ExecutiveDashboard.tsx ya existe
+- [x] Gráficos de tendencia de FWI agregado - incluido en ExecutiveDashboard
+- [x] Flujo EWA end-to-end verificado y funcional (EWASlider + routers.ts ewa.*)
+- [x] Flujo de canje de oferta con QR verificado (CouponValidator + validateCoupon)
+- [x] Responsive mobile: EmployeeDashboard (CSS utilities agregados)
+- [x] Responsive mobile: B2BDashboard (CSS utilities agregados)
+- [x] Responsive mobile: MerchantDashboard (CSS utilities agregados)
+
+### Nice to Have
+- [x] Animaciones de transición entre páginas (Framer Motion) - PageTransition.tsx ya existe
+- [x] Notificaciones en tiempo real (toast + badge) - useRealtimeNotifications.ts
+- [x] Micro-interacciones en botones y cards (animated-button.tsx, celebration.tsx)
+
+
+## Fase 25: Preparación Final Demo Day
+
+### Implementación
+- [x] Ejecutar script de seed para poblar datos de demostración (48 empleados, 490 transacciones, 10 ofertas, 21 EWA)
+- [x] Crear modo demo con botón de reset de datos (DemoModePanel.tsx + demo router)
+- [x] Crear instrucciones para video de respaldo (DEMO_VIDEO_GUIDE.md)
+
+### Auditoría Exhaustiva
+- [ ] Verificar flujo de login/autenticación
+- [ ] Verificar flujo EWA completo (solicitud → aprobación → disbursement)
+- [ ] Verificar flujo de ofertas y canje QR
+- [ ] Verificar dashboard ejecutivo con métricas
+- [ ] Verificar tour de onboarding
+- [ ] Verificar leaderboard y badges
+- [ ] Verificar notificaciones
+- [ ] Verificar responsive en móvil
+- [ ] Verificar estados de carga y vacíos
+- [ ] Verificar manejo de errores
+- [ ] Verificar rendimiento y tiempos de carga
+
+
+## Fase 25: Preparación Final Demo Day - COMPLETADA
+
+### Seed Data y Modo Demo
+- [x] Ejecutar script de seed para poblar datos de demostración (48 empleados, 490 transacciones, 10 ofertas, 21 EWA)
+- [x] Crear modo demo con botón de reset de datos (DemoModePanel.tsx + demo router)
+- [x] Crear instrucciones para video de respaldo (DEMO_VIDEO_GUIDE.md)
+
+### Auditoría Exhaustiva - 12 ÁREAS VERIFICADAS
+- [x] Landing Page: OK - Título, CTAs, badges de seguridad
+- [x] Flujo de Autenticación: OK - Tour de bienvenida, notificaciones
+- [x] Dashboard Empleado: OK - FWI, TreePoints, transacciones, metas, badges
+- [x] Flujo EWA: OK - Modal, slider, cálculo de comisión
+- [x] Dashboard B2B Admin: OK - Métricas, alertas, top performers
+- [x] Dashboard Merchant: OK - Ventas, canjes, campañas
+- [x] Validación QR: OK - CouponValidator integrado
+- [x] Gamificación: OK - TreePoints, badges, leaderboard
+- [x] Responsive Mobile: OK - CSS utilities configurados
+- [x] Estados de Error: OK - 404, estados vacíos, skeletons
+- [x] Calculadora ROI: OK - Inputs, cálculos, lead capture
+- [x] Rendimiento: OK - 148 tests, 0 errores TypeScript
+
+### Resultado
+- **148 tests pasando**
+- **0 errores de TypeScript**
+- **APROBADO PARA DEMO DAY** ✅
+
+---
+*Auditoría completada: 11 Diciembre 2025*
+
+
+## Fase 26: WebSockets y Landing Page Inversores
+
+### WebSockets para Métricas en Tiempo Real
+- [x] Configurar servidor WebSocket en Express (socket.io)
+- [x] Crear hook useRealtimeMetrics para suscripción a eventos
+- [x] Implementar broadcast de cambios de FWI Score
+- [x] Implementar broadcast de nuevos TreePoints
+- [x] Implementar broadcast de alertas en tiempo real
+- [x] Crear componente LiveMetricCard con animación de actualización
+
+### Landing Page para Inversores
+- [ ] Crear página /investor-pitch con diseño premium
+- [ ] Sección Hero con propuesta de valor para inversores
+- [ ] Métricas de tracción animadas (usuarios, transacciones, GMV)
+- [ ] Pitch deck interactivo con slides navegables
+- [ ] Sección de equipo fundador
+- [ ] Sección de roadmap y milestones
+- [ ] Formulario de contacto para inversores
+- [ ] Botón de descarga de pitch deck PDF
+
+
+## Fase 27: Evaluación y Optimización de Pricing
+
+### Investigación de Mercado
+- [ ] Investigar pricing de competidores (Minu, Payflow, Wagestream, etc.)
+- [ ] Analizar modelos de pricing B2B SaaS en LATAM
+- [ ] Identificar features diferenciadores del mercado
+
+### Análisis del Pricing Actual
+- [ ] Revisar estructura de planes actual
+- [ ] Evaluar alineación precio-valor
+- [ ] Identificar gaps en el featuring
+
+### Optimización
+- [ ] Rediseñar estructura de planes si es necesario
+- [ ] Actualizar sección de pricing en landing page
+- [ ] Asegurar claridad en propuesta de valor por plan
+
+
+## Fase 27: Evaluación y Optimización de Pricing (COMPLETADA)
+
+### Investigación de Competidores
+- [x] Analizar pricing de Minu (México) - ~$6.50/usuario/mes, +2000 empresas, +1M usuarios
+- [x] Analizar pricing de Wagestream (UK/US) - $0.50-$2/usuario/mes
+- [x] Analizar pricing de otros competidores LATAM (Origin, EWA típicos)
+- [x] Documentar hallazgos en PRICING_RESEARCH.md
+
+### Evaluación del Pricing Actual
+- [x] Revisar estructura de planes actual (3 segmentos, 7 planes)
+- [x] Comparar features vs. competencia
+- [x] Identificar gaps: Faltaba telemedicina, caja de ahorro, transparencia Enterprise
+- [x] Proponer mejoras: Nuevos precios $1.99-$7, features diferenciadores
+
+### Actualización de Pricing
+- [x] Rediseñar sección de pricing en landing page (Pricing.tsx)
+- [x] Nuevos planes B2B: Starter ($1.99), Professional ($4.50), Enterprise (desde $7)
+- [x] Nuevos planes B2C: Básico (Gratis), Premium ($2.99)
+- [x] Nuevos planes Merchants: Marketplace (5%), Partner (3% + $99/mes)
+- [x] Agregar comparativa vs. competencia (Treevü vs Minu vs Wagestream)
+- [x] Agregar FAQs de pricing (4 preguntas frecuentes)
+- [x] Agregar trust badges (Sin Custodia, ISO 27001, LATAM Ready, Soporte 24/7)
+
+### Cambios Clave en Pricing:
+| Segmento | Antes | Después | Cambio |
+|----------|-------|---------|--------|
+| B2B Starter | $2.50/usuario | $1.99/usuario | -20% más competitivo |
+| B2B Pro | $5.00/usuario | $4.50/usuario | -10% + más features |
+| B2B Enterprise | "Custom" | "Desde $7" | Más transparente |
+| B2C Premium | $4.99/mes | $2.99/mes | -40% más accesible |
+| Merchant | 5-10% | 5% o 3%+$99 | Opciones claras |
+
+### Features Agregados:
+- Telemedicina básica incluida en Professional
+- Caja de ahorro con rendimiento 8%+ en Enterprise
+- Gamificación destacada (TreePoints, Badges, Leaderboard)
+- IA Predictiva como diferenciador clave
+- Torre de Control ejecutiva
+
+
+## Fase 28: Animación Typewriter, i18n y Video Explicativo
+
+### Animación de Escritura (Typewriter)
+- [x] Crear hook useTypewriter para efecto de escritura
+- [x] Aplicar animación al título "Treevü: El Sistema Operativo"
+- [x] Agregar cursor parpadeante al final del texto
+- [x] Configurar velocidad y delays apropiados (120ms, 80ms, delays escalonados)
+
+### Internacionalización (i18n)
+- [x] Instalar y configurar react-i18next
+- [x] Crear archivos de traducción ES/EN (es.json, en.json)
+- [x] Traducir textos principales de la landing page
+- [x] Agregar selector de idioma en el header (LanguageSwitcher)
+- [x] Persistir preferencia de idioma en localStorage (treevu_language)
+
+### Video Explicativo
+- [x] Crear sección de video en el Hero (VideoModal.tsx)
+- [x] Agregar placeholder/thumbnail para video (con contenido "Próximamente")
+- [x] Implementar modal de reproducción de video (con controles play/pause/mute/fullscreen)
+- [x] Agregar botón "Ver Video" con icono de play (en CTAs del Hero)
+- [x] Diseño responsive para el reproductor
+
+
+## Fase 29: i18n Completo y Formulario de Leads
+
+### Extensión de i18n
+- [x] Conectar Hero al sistema i18n
+- [ ] Conectar Pricing al sistema i18n
+- [ ] Conectar FAQ al sistema i18n
+- [ ] Conectar Solutions al sistema i18n
+- [ ] Conectar Contact/Footer al sistema i18n
+
+### Formulario de Contacto Funcional
+- [ ] Crear tabla leads en base de datos
+- [ ] Crear endpoint tRPC para guardar leads
+- [ ] Implementar validación de formulario
+- [ ] Conectar formulario existente al endpoint
+- [ ] Agregar feedback visual (loading, success, error)
+- [ ] Enviar notificación al owner cuando llega un lead

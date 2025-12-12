@@ -1,0 +1,196 @@
+{
+  "nav": {
+    "solutions": "SOLUCIONES",
+    "demos": "DEMOS",
+    "pricing": "PRECIOS",
+    "partners": "PARTNERS",
+    "calculateRoi": "Calcular ROI"
+  },
+  "hero": {
+    "badge": "Nueva Tecnología OCR 2.0 con Treevü Vision Engine™",
+    "brand": "Treevü:",
+    "system": "El Sistema",
+    "operative": "Operativo",
+    "slogan": "Inteligencia Artificial para el Bienestar Financiero",
+    "description": "Transformamos un proceso transaccional estático en un <1>activo de datos dinámico</1>. Sin tocar tu flujo de caja, sin riesgo de balance.",
+    "dynamicAsset": "activo de datos dinámico",
+    "ctaRoi": "Calcular mi ROI",
+    "ctaEcosystem": "Ver Ecosistema",
+    "watchVideo": "Ver Video",
+    "trustBadges": {
+      "iso": "ISO 27001 Ready",
+      "encryption": "Encriptación AES-256",
+      "noCustody": "Sin Custodia de Fondos"
+    }
+  },
+  "solutions": {
+    "title": "El Ecosistema",
+    "subtitle": "Conectando necesidades reales",
+    "description": "Un ciclo virtuoso donde el bienestar financiero genera valor compartido para todos.",
+    "employee": {
+      "title": "Empleados",
+      "description": "Acceso a salario devengado, educación financiera y beneficios exclusivos"
+    },
+    "company": {
+      "title": "Empresas",
+      "description": "Torre de Control con métricas de bienestar y reducción de rotación"
+    },
+    "merchant": {
+      "title": "Comercios",
+      "description": "Marketplace de ofertas con tráfico cualificado y alta conversión"
+    }
+  },
+  "pricing": {
+    "title": "Planes para cada etapa de tu",
+    "titleHighlight": "crecimiento",
+    "subtitle": "Desde startups hasta corporativos. Sin contratos de largo plazo. Cancela cuando quieras.",
+    "transparent": "Precios transparentes, sin sorpresas",
+    "tabs": {
+      "b2b": "Empresas (B2B)",
+      "b2c": "Empleados (B2C)",
+      "merchants": "Comercios"
+    },
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Ideal para empresas que inician su programa de bienestar financiero.",
+        "price": "$1.99",
+        "period": "/ usuario / mes",
+        "badge": "SIN INTEGRACIÓN REQUERIDA",
+        "cta": "Comenzar Prueba Gratis"
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "La solución completa para empresas que buscan resultados medibles.",
+        "price": "$4.50",
+        "period": "/ usuario / mes",
+        "badge": "MÁS POPULAR",
+        "savings": "Ahorra 20% vs. competencia",
+        "cta": "Agendar Demo"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "Para grandes empresas con necesidades de personalización.",
+        "price": "Desde $7",
+        "period": "/ usuario / mes",
+        "badge": "+500 EMPLEADOS",
+        "cta": "Contactar Ventas"
+      }
+    },
+    "features": {
+      "fwiDashboard": "FWI Score Dashboard (Índice de Bienestar)",
+      "basicReports": "Reportes básicos de bienestar por departamento",
+      "digitalOnboarding": "Onboarding digital para empleados",
+      "riskAlerts": "Alertas de riesgo financiero básicas",
+      "marketplaceAccess": "Acceso a marketplace de descuentos",
+      "emailSupport": "Soporte por email",
+      "allStarter": "Todo lo de Starter +",
+      "ewa": "EWA (Adelanto de Salario) sin intereses",
+      "predictiveAi": "IA Predictiva: Alertas de riesgo de fuga",
+      "controlTower": "Torre de Control: Dashboard ejecutivo",
+      "riskClustering": "Risk Clustering por departamento",
+      "gamification": "Gamificación: TreePoints, Badges, Leaderboard",
+      "basicTelemedicine": "Telemedicina básica incluida",
+      "hrisApi": "API integración con HRIS",
+      "prioritySupport": "Soporte prioritario",
+      "allProfessional": "Todo lo de Professional +",
+      "aiIntervention": "Intervención automatizada con IA",
+      "dataAsService": "Data as a Service (DaaS)",
+      "premiumHris": "Integración HRIS premium (SAP, Oracle)",
+      "savingsBox": "Caja de ahorro con rendimiento 8%+",
+      "fullTelemedicine": "Telemedicina completa + salud mental",
+      "dedicatedCsm": "Customer Success Manager dedicado",
+      "slaGuarantee": "SLA garantizado 99.9%",
+      "customReports": "Reportes personalizados"
+    },
+    "comparison": {
+      "title": "¿Por qué Treevü vs. la competencia?",
+      "fwiScore": "FWI Score (Índice propietario)",
+      "predictiveAi": "IA Predictiva de Riesgo",
+      "gamification": "Gamificación Completa",
+      "noCustody": "Modelo No-Custodio",
+      "latamFocus": "Enfoque LATAM",
+      "telemedicine": "Telemedicina Incluida"
+    },
+    "trustBadges": {
+      "noCustody": "Sin Custodia",
+      "noCustodyDesc": "Nunca tocamos tu dinero",
+      "iso": "ISO 27001",
+      "isoDesc": "Seguridad certificada",
+      "latam": "LATAM Ready",
+      "latamDesc": "México, Colombia, Chile, Perú",
+      "support": "Soporte 24/7",
+      "supportDesc": "En español siempre"
+    },
+    "faq": {
+      "contracts": {
+        "question": "¿Hay contratos de largo plazo?",
+        "answer": "No. Todos nuestros planes son mensuales y puedes cancelar en cualquier momento sin penalidades."
+      },
+      "implementation": {
+        "question": "¿Cuánto tiempo toma la implementación?",
+        "answer": "El plan Starter está listo en 24 horas. Professional toma 1-2 semanas. Enterprise requiere 4-6 semanas para integraciones personalizadas."
+      },
+      "ewaDebt": {
+        "question": "¿El EWA genera deuda para el empleado?",
+        "answer": "No. El EWA es un adelanto del salario ya devengado, no un préstamo. Se descuenta automáticamente de la nómina sin intereses."
+      },
+      "security": {
+        "question": "¿Qué pasa con la seguridad de los datos?",
+        "answer": "Cumplimos con ISO 27001, encriptación AES-256 en tránsito y reposo, y nunca almacenamos datos financieros sensibles."
+      }
+    }
+  },
+  "roi": {
+    "title": "Calcula tu",
+    "titleHighlight": "Retorno de Inversión",
+    "subtitle": "Descubre cuánto puede ahorrar tu empresa con Treevü",
+    "employees": "Número de Empleados",
+    "turnover": "Rotación Anual (%)",
+    "avgSalary": "Salario Promedio (MXN)",
+    "absenteeism": "Días de Ausentismo/Año",
+    "calculate": "Calcular Impacto",
+    "results": {
+      "turnoverSavings": "Ahorro en Rotación",
+      "absenteeismSavings": "Ahorro en Ausentismo",
+      "productivityGain": "Ganancia en Productividad",
+      "totalRoi": "ROI Total Anual"
+    }
+  },
+  "contact": {
+    "title": "Únete al",
+    "titleHighlight": "Programa de Partners",
+    "subtitle": "Sé parte del ecosistema que está transformando el bienestar financiero en LATAM",
+    "tabs": {
+      "company": "Soy Empresa",
+      "user": "Soy Usuario"
+    },
+    "form": {
+      "name": "Nombre completo",
+      "namePlaceholder": "Ej. Roberto Martínez",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "roberto@empresa.com",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de la Organización",
+      "size": "Tamaño de empresa",
+      "sizes": {
+        "small": "100 - 500 Colaboradores",
+        "medium": "500 - 2,000 Colaboradores",
+        "large": "+2,000 Colaboradores"
+      },
+      "submit": "Aplicar al Programa"
+    }
+  },
+  "footer": {
+    "description": "El Sistema Operativo de Bienestar Financiero para LATAM",
+    "contact": "contacto@treevu.app",
+    "copyright": "© 2024 Treevü. Todos los derechos reservados."
+  },
+  "common": {
+    "learnMore": "Saber más",
+    "getStarted": "Comenzar",
+    "contactUs": "Contáctanos",
+    "readMore": "Leer más",
+    "viewAll": "Ver todo"
+  }
+}

@@ -138,11 +138,9 @@ export default function DemoEmpleado() {
       <header className="border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <a className="flex items-center gap-2 text-white font-bold text-xl">
-                <TreePine className="w-6 h-6 text-emerald-400" />
-                Treevü
-              </a>
+            <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl">
+              <TreePine className="w-6 h-6 text-emerald-400" />
+              Treevü
             </Link>
             <Badge variant="outline" className="border-emerald-500/50 text-emerald-400">
               Demo Empleado
@@ -581,15 +579,11 @@ export default function DemoEmpleado() {
         <div className="container mx-auto px-4 text-center">
           <p className="text-gray-400 mb-4">¿Te gustaría tener esto para tus empleados?</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/#founders-form">
-              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600">
-                Solicitar Demo para mi Empresa
-              </Button>
+            <Link href="/#founders-form" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 bg-emerald-500 hover:bg-emerald-600 text-white">
+              Solicitar Demo para mi Empresa
             </Link>
-            <Link href="/demo/empresa">
-              <Button size="lg" variant="outline" className="border-emerald-500/50 text-emerald-400">
-                Ver Demo Empresa
-              </Button>
+            <Link href="/demo/empresa" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10">
+              Ver Demo Empresa
             </Link>
           </div>
         </div>

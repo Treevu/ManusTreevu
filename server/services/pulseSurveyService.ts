@@ -6,10 +6,9 @@ import {
   pulseSurveyAssignments,
   users 
 } from '../../drizzle/schema';
-import { eq, and, isNull, gte, lte, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, gte, lte, desc } from 'drizzle-orm';
 import { sendPushToUser } from './pushService';
 
-// Default wellbeing questions
 export const DEFAULT_QUESTIONS = [
   {
     questionText: '¿Cómo te sientes respecto a tu situación financiera esta semana?',
@@ -44,7 +43,6 @@ export const DEFAULT_QUESTIONS = [
   },
 ];
 
-// Create a new survey with default questions
 export async function createDefaultSurvey(
   organizationId: number | null,
   createdBy: number,
@@ -70,7 +68,6 @@ export async function createDefaultSurvey(
 
   if (!survey?.id) return null;
 
-  // Add default questions
   for (let i = 0; i < DEFAULT_QUESTIONS.length; i++) {
     const q = DEFAULT_QUESTIONS[i];
     await db.insert(pulseQuestions).values({
@@ -78,7 +75,7 @@ export async function createDefaultSurvey(
       questionText: q.questionText,
       questionType: q.questionType,
       category: q.category,
-      options: q.options || null,
+      options: (q as any).options || null,
       orderIndex: i,
       isRequired: true,
     });
@@ -87,7 +84,6 @@ export async function createDefaultSurvey(
   return survey.id;
 }
 
-// Get active survey for a user
 export async function getActiveSurveyForUser(userId: number): Promise<{
   survey: any;
   questions: any[];
@@ -96,13 +92,11 @@ export async function getActiveSurveyForUser(userId: number): Promise<{
   const db = await getDb();
   if (!db) return null;
 
-  // Get user's organization
   const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user.length) return null;
 
   const now = new Date();
 
-  // Find active survey for user's organization or global
   const surveys = await db.select().from(pulseSurveys).where(
     and(
       eq(pulseSurveys.isActive, true),
@@ -115,7 +109,6 @@ export async function getActiveSurveyForUser(userId: number): Promise<{
 
   const survey = surveys[0];
 
-  // Check if user has an assignment
   let assignment = await db.select().from(pulseSurveyAssignments).where(
     and(
       eq(pulseSurveyAssignments.surveyId, survey.id),
@@ -123,7 +116,6 @@ export async function getActiveSurveyForUser(userId: number): Promise<{
     )
   ).limit(1);
 
-  // Create assignment if doesn't exist
   if (!assignment.length) {
     const dueAt = new Date();
     dueAt.setDate(dueAt.getDate() + 3);
@@ -142,10 +134,8 @@ export async function getActiveSurveyForUser(userId: number): Promise<{
     ).limit(1);
   }
 
-  // If already completed, return null
   if (assignment[0]?.completedAt) return null;
 
-  // Get questions
   const questions = await db.select().from(pulseQuestions)
     .where(eq(pulseQuestions.surveyId, survey.id))
     .orderBy(pulseQuestions.orderIndex);
@@ -157,7 +147,6 @@ export async function getActiveSurveyForUser(userId: number): Promise<{
   };
 }
 
-// Submit survey responses
 export async function submitSurveyResponses(
   userId: number,
   surveyId: number,
@@ -171,7 +160,6 @@ export async function submitSurveyResponses(
   const db = await getDb();
   if (!db) return false;
 
-  // Verify assignment exists and not completed
   const assignment = await db.select().from(pulseSurveyAssignments).where(
     and(
       eq(pulseSurveyAssignments.surveyId, surveyId),
@@ -182,7 +170,6 @@ export async function submitSurveyResponses(
 
   if (!assignment.length) return false;
 
-  // Insert responses
   for (const response of responses) {
     await db.insert(pulseResponses).values({
       surveyId,
@@ -194,7 +181,6 @@ export async function submitSurveyResponses(
     });
   }
 
-  // Mark assignment as completed
   await db.update(pulseSurveyAssignments).set({
     completedAt: new Date(),
   }).where(eq(pulseSurveyAssignments.id, assignment[0].id));
@@ -202,7 +188,6 @@ export async function submitSurveyResponses(
   return true;
 }
 
-// Get survey results for B2B admin
 export async function getSurveyResults(surveyId: number): Promise<{
   survey: any;
   totalResponses: number;
@@ -248,7 +233,6 @@ export async function getSurveyResults(surveyId: number): Promise<{
       if (scores.length > 0) {
         avgScore = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
       }
-      // Distribution for 1-5 scale
       for (let i = 1; i <= 5; i++) {
         distribution[String(i)] = scores.filter((s: number) => s === i).length;
       }
@@ -274,12 +258,10 @@ export async function getSurveyResults(surveyId: number): Promise<{
   };
 }
 
-// Calculate wellbeing score from survey responses (correlate with FWI)
 export async function calculateWellbeingScore(userId: number): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
 
-  // Get last 4 weeks of responses
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
@@ -292,7 +274,6 @@ export async function calculateWellbeingScore(userId: number): Promise<number | 
 
   if (responses.length === 0) return null;
 
-  // Calculate average of all scale/emoji responses (1-5)
   const scores = responses
     .filter((r: any) => r.responseValue !== null)
     .map((r: any) => r.responseValue);
@@ -300,12 +281,9 @@ export async function calculateWellbeingScore(userId: number): Promise<number | 
   if (scores.length === 0) return null;
 
   const avgScore = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
-  
-  // Convert 1-5 scale to 0-100 score
   return Math.round((avgScore - 1) * 25);
 }
 
-// Send survey reminder notifications
 export async function sendSurveyReminders(surveyId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
@@ -314,7 +292,6 @@ export async function sendSurveyReminders(surveyId: number): Promise<number> {
   const twoDaysAgo = new Date(now);
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-  // Get pending assignments without reminders sent recently
   const pendingAssignments = await db.select({
     assignment: pulseSurveyAssignments,
     user: users,
@@ -330,14 +307,12 @@ export async function sendSurveyReminders(surveyId: number): Promise<number> {
   let sentCount = 0;
 
   for (const { assignment, user } of pendingAssignments) {
-    // Skip if reminder was sent recently
     if (assignment.reminderSentAt && assignment.reminderSentAt > twoDaysAgo) continue;
 
     try {
       await sendPushToUser(user.id, {
         title: '📋 Encuesta de Bienestar',
         body: '¡Tu opinión importa! Completa la encuesta semanal en menos de 2 minutos.',
-        url: '/survey',
       });
 
       await db.update(pulseSurveyAssignments).set({
@@ -353,7 +328,6 @@ export async function sendSurveyReminders(surveyId: number): Promise<number> {
   return sentCount;
 }
 
-// Get all surveys for an organization
 export async function getOrganizationSurveys(organizationId: number | null): Promise<any[]> {
   const db = await getDb();
   if (!db) return [];

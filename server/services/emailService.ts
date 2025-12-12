@@ -667,11 +667,6 @@ const EMAIL_TEMPLATES: Record<string, (data: any) => { subject: string; html: st
       </html>
     `
   }),
-
-  weekly_report: (data: any) => ({
-    subject: data.subject || '📊 Reporte Semanal Treevü',
-    html: data.html || '<p>Reporte semanal</p>'
-  }),
 };
 
 /**

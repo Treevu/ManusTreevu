@@ -6,13 +6,20 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, ArrowLeft, Users, AlertTriangle, TrendingDown, 
-  Building2, Gift, BarChart3, DollarSign, Settings, Bell, SlidersHorizontal
+  Building2, Gift, BarChart3, DollarSign, Settings, Bell, SlidersHorizontal, ClipboardList
 } from "lucide-react";
 import NotificationCenter from "@/components/NotificationCenter";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import ThemeToggle from "@/components/ThemeToggle";
 import { FWITrendWidget } from "@/components/FWITrendWidget";
 import { ActiveAlertsWidget } from "@/components/ActiveAlertsWidget";
+import { RiskHeatMap } from "@/components/dashboard/RiskHeatMap";
+import { FundsFlowVisualizer } from "@/components/dashboard/FundsFlowVisualizer";
+import { ProgressiveDisclosure, B2B_EDUCATION_STEPS } from "@/components/dashboard/ProgressiveDisclosure";
+import { EducationGamification } from "@/components/EducationGamification";
+import { allTutorials } from "@/lib/educationalContent";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useOffline } from "@/hooks/useOffline";
@@ -30,6 +37,7 @@ export default function B2BDashboard() {
     totalDepartments?: number;
   }>({});
   const [usingCache, setUsingCache] = useState(false);
+  const [showB2BEducation, setShowB2BEducation] = useState(false);
 
   // Queries
   const { data: metrics, isLoading: metricsLoading } = trpc.b2b.getMetrics.useQuery();
@@ -143,6 +151,18 @@ export default function B2BDashboard() {
               </Button>
             </Link>
             
+            {/* Survey Results */}
+            <Link href="/dashboard/survey-results">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 rounded-full hover:bg-teal-500/10"
+                title="Resultados de encuestas"
+              >
+                <ClipboardList className="h-5 w-5 text-teal-400" />
+              </Button>
+            </Link>
+            
             <ThemeToggle />
             <NotificationCenter />
             <Link href="/settings/notifications">
@@ -178,9 +198,10 @@ export default function B2BDashboard() {
                 <div>
                   <p className="text-sm text-gray-400 flex items-center gap-1">
                     FWI Promedio
-                    <InfoTooltip 
-                      title="FWI Promedio de tu Equipo" 
-                      content="El FWI (Financial Wellness Index) promedio de todos tus empleados. Un score mayor a 70 indica un equipo financieramente saludable."
+                    <EducationGamification
+                      tutorialType="b2b"
+                      steps={allTutorials.b2b.torreControl.basic.steps}
+                      onComplete={() => toast.success('¡Felicidades! Has ganado 100 TreePoints por completar el tutorial de Torre de Control')}
                     />
                     {usingCache && <OfflineDataBadge size="sm" />}
                   </p>
@@ -222,10 +243,16 @@ export default function B2BDashboard() {
           </Card>
         </div>
 
-        {/* FWI Trend Widget and Active Alerts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <FWITrendWidget className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10" />
+        {/* Torre de Control de Riesgo - Componentes Premium */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <RiskHeatMap />
+          <FundsFlowVisualizer />
           <ActiveAlertsWidget className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10" limit={3} />
+        </div>
+
+        {/* FWI Trend Widget */}
+        <div className="mb-8">
+          <FWITrendWidget className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10" />
         </div>
 
         <Tabs defaultValue="risk" className="space-y-6">
@@ -531,6 +558,16 @@ export default function B2BDashboard() {
           <LastSyncIndicator />
         </div>
       </footer>
+
+      {/* B2B Education Modal */}
+      <ProgressiveDisclosure
+        isOpen={showB2BEducation}
+        onClose={() => setShowB2BEducation(false)}
+        title="Torre de Control Financiero"
+        description="Aprende a usar el dashboard B2B de Treevü"
+        steps={B2B_EDUCATION_STEPS}
+        onComplete={() => toast.success('¡Excelente! Ya conoces todas las funcionalidades del dashboard B2B')}
+      />
     </div>
   );
 }
