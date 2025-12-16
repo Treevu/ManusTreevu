@@ -1,11 +1,21 @@
 import express, { type Express } from "express";
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
-import path from "path";
 import { createServer as createViteServer } from "vite";
+import { fileURLToPath } from "url";
+
 import viteConfig from "../../vite.config";
 
+// Node ESM compatible __dirname / __filename
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * Dev-only: Attach Vite middlewares (HMR + transformIndexHtml)
+ * IMPORTANT: Do NOT call this in production.
+ */
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -21,24 +31,27 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
       const clientTemplate = path.resolve(
-        import.meta.dirname,
+        __dirname,
         "../..",
         "client",
         "index.html"
       );
 
-      // always reload the index.html file from disk incase it changes
+      // always reload index.html from disk in case it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
+
       const page = await vite.transformIndexHtml(url, template);
+
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
@@ -47,21 +60,43 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+/**
+ * Prod-only: Serve prebuilt static assets.
+ * Expects: dist/public (from your Vite build output).
+ */
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "public");
+  // In Railway, cwd is usually /app (where package.json lives)
+  const distPath = path.resolve(process.cwd(), "dist", "public");
+
   if (!fs.existsSync(distPath)) {
     console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `[serveStatic] Build folder not found: ${distPath}\n` +
+        `Did you run "pnpm build" and is Vite outputting to dist/public?`
     );
+  } else {
+    console.log(`[serveStatic] Serving static from: ${distPath}`);
   }
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexHtml = path.join(distPath, "index.html");
+    res.sendFile(indexHtml);
   });
+}
+
+/**
+ * Helper to apply the right mode automatically.
+ * Call this from your server entrypoint.
+ */
+export async function setupFrontend(app: Express, server: Server) {
+  const env = process.env.NODE_ENV ?? "development";
+
+  if (env === "development") {
+    await setupVite(app, server);
+    return;
+  }
+
+  // Production / other environments
+  serveStatic(app);
 }
