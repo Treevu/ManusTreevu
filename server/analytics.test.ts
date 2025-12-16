@@ -90,7 +90,7 @@ describe("analytics.getUserStats", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getUserStats({});
+    const result = await caller.legacyAnalytics.getUserStats({});
 
     expect(result).toHaveProperty("total");
     expect(result).toHaveProperty("activeToday");
@@ -108,7 +108,7 @@ describe("analytics.getUserStats", () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const result = await caller.analytics.getUserStats({ startDate: thirtyDaysAgo.toISOString() });
+    const result = await caller.legacyAnalytics.getUserStats({ startDate: thirtyDaysAgo.toISOString() });
 
     expect(result).toHaveProperty("total");
     expect(typeof result.total).toBe("number");
@@ -118,7 +118,7 @@ describe("analytics.getUserStats", () => {
     const { ctx } = createB2BAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getUserStats();
+    const result = await caller.legacyAnalytics.getUserStats();
 
     expect(result).toHaveProperty("total");
     expect(result).toHaveProperty("activeToday");
@@ -130,7 +130,7 @@ describe("analytics.getUserStats", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getUserStats()).rejects.toThrow("Solo administradores pueden ver analytics");
+    await expect(caller.legacyAnalytics.getUserStats()).rejects.toThrow("Solo administradores pueden ver analytics");
   });
 });
 describe("analytics.getEwaStats", () => {
@@ -138,7 +138,7 @@ describe("analytics.getEwaStats", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getEwaStats({});
+    const result = await caller.legacyAnalytics.getEwaStats({});
 
     expect(result).toHaveProperty("total");
     expect(result).toHaveProperty("pending");
@@ -158,7 +158,7 @@ describe("analytics.getEwaStats", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getEwaStats()).rejects.toThrow("Solo administradores pueden ver analytics");
+    await expect(caller.legacyAnalytics.getEwaStats()).rejects.toThrow("Solo administradores pueden ver analytics");
   });
 });
 
@@ -167,7 +167,7 @@ describe("analytics.getEngagementStats", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getEngagementStats({});
+    const result = await caller.legacyAnalytics.getEngagementStats({});
 
     expect(result).toHaveProperty("achievements");
     expect(result).toHaveProperty("goals");
@@ -182,7 +182,7 @@ describe("analytics.getEngagementStats", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getEngagementStats()).rejects.toThrow("Solo administradores pueden ver analytics");
+    await expect(caller.legacyAnalytics.getEngagementStats()).rejects.toThrow("Solo administradores pueden ver analytics");
   });
 });
 
@@ -191,7 +191,7 @@ describe("analytics.getDepartmentStats", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getDepartmentStats({});
+    const result = await caller.legacyAnalytics.getDepartmentStats({});
 
     expect(Array.isArray(result)).toBe(true);
   });
@@ -200,7 +200,7 @@ describe("analytics.getDepartmentStats", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getDepartmentStats()).rejects.toThrow("Solo administradores pueden ver analytics");
+    await expect(caller.legacyAnalytics.getDepartmentStats()).rejects.toThrow("Solo administradores pueden ver analytics");
   });
 });
 
@@ -209,7 +209,7 @@ describe("analytics.getMonthlyTrends", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getMonthlyTrends({});
+    const result = await caller.legacyAnalytics.getMonthlyTrends({});
 
     expect(Array.isArray(result)).toBe(true);
     if (result.length > 0) {
@@ -224,7 +224,7 @@ describe("analytics.getMonthlyTrends", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getMonthlyTrends({ months: 3 });
+    const result = await caller.legacyAnalytics.getMonthlyTrends({ months: 3 });
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeLessThanOrEqual(3);
@@ -234,7 +234,7 @@ describe("analytics.getMonthlyTrends", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getMonthlyTrends()).rejects.toThrow("Solo administradores pueden ver analytics");
+    await expect(caller.legacyAnalytics.getMonthlyTrends()).rejects.toThrow("Solo administradores pueden ver analytics");
   });
 });
 
@@ -244,7 +244,7 @@ describe("analytics.getAlertThresholds", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getAlertThresholds();
+    const result = await caller.legacyAnalytics.getAlertThresholds();
 
     expect(Array.isArray(result)).toBe(true);
   });
@@ -253,7 +253,7 @@ describe("analytics.getAlertThresholds", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getAlertThresholds()).rejects.toThrow("Solo administradores pueden configurar alertas");
+    await expect(caller.legacyAnalytics.getAlertThresholds()).rejects.toThrow("Solo administradores pueden configurar alertas");
   });
 });
 
@@ -262,7 +262,7 @@ describe("analytics.setAlertThreshold", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.setAlertThreshold({
+    const result = await caller.legacyAnalytics.setAlertThreshold({
       departmentId: 1,
       fwiThreshold: 50,
       highRiskThreshold: 3,
@@ -280,7 +280,7 @@ describe("analytics.setAlertThreshold", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.setAlertThreshold({
+    await expect(caller.legacyAnalytics.setAlertThreshold({
       departmentId: 1,
       fwiThreshold: 50,
       highRiskThreshold: 3,
@@ -296,7 +296,7 @@ describe("analytics.getAlertHistory", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getAlertHistory({});
+    const result = await caller.legacyAnalytics.getAlertHistory({});
 
     expect(Array.isArray(result)).toBe(true);
   });
@@ -305,7 +305,7 @@ describe("analytics.getAlertHistory", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getAlertHistory({ departmentId: 1 });
+    const result = await caller.legacyAnalytics.getAlertHistory({ departmentId: 1 });
 
     expect(Array.isArray(result)).toBe(true);
   });
@@ -314,7 +314,7 @@ describe("analytics.getAlertHistory", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getAlertHistory()).rejects.toThrow("Solo administradores pueden ver historial de alertas");
+    await expect(caller.legacyAnalytics.getAlertHistory()).rejects.toThrow("Solo administradores pueden ver historial de alertas");
   });
 });
 
@@ -323,7 +323,7 @@ describe("analytics.getDepartmentDetail", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.getDepartmentDetail({ departmentId: 1 });
+    const result = await caller.legacyAnalytics.getDepartmentDetail({ departmentId: 1 });
 
     expect(result).toHaveProperty("department");
     expect(result).toHaveProperty("employees");
@@ -339,7 +339,7 @@ describe("analytics.getDepartmentDetail", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.getDepartmentDetail({ departmentId: 1 })).rejects.toThrow("Solo administradores pueden ver detalles de departamento");
+    await expect(caller.legacyAnalytics.getDepartmentDetail({ departmentId: 1 })).rejects.toThrow("Solo administradores pueden ver detalles de departamento");
   });
 });
 
@@ -348,7 +348,7 @@ describe("analytics.checkAlerts", () => {
     const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.analytics.checkAlerts();
+    const result = await caller.legacyAnalytics.checkAlerts();
 
     expect(result).toHaveProperty("alertsTriggered");
     expect(result).toHaveProperty("alerts");
@@ -360,6 +360,6 @@ describe("analytics.checkAlerts", () => {
     const { ctx } = createEmployeeContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.analytics.checkAlerts()).rejects.toThrow("Solo administradores pueden verificar alertas");
+    await expect(caller.legacyAnalytics.checkAlerts()).rejects.toThrow("Solo administradores pueden verificar alertas");
   });
 });

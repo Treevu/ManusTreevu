@@ -38,9 +38,29 @@ import { allTutorials } from "@/lib/educationalContent";
 import { Leaderboard } from "@/components/Leaderboard";
 import { BadgeShowcase } from "@/components/BadgeCard";
 import { Award, Trophy } from "lucide-react";
+import { RewardsTierDisplay } from "@/components/RewardsTierDisplay";
+import { EWARateCard } from "@/components/EWARateCard";
+import { PersonalizedRecommendationsCarousel } from '@/components/PersonalizedRecommendationsCarousel';
+import PointsRedemption from '@/components/PointsRedemption';
+import { MetricTooltip, MetricValue, MetricBadge } from '@/components/MetricTooltip';
+import { employeeTooltips } from '@/lib/tooltipTexts';
+import { ContextualTooltip, contextualTooltipExamples } from '@/components/ContextualTooltip';
+import { MiniChartTooltip, miniChartData } from '@/components/MiniChartTooltip';
+import ExpensePatternAnalysis from '@/components/dashboard/ExpensePatternAnalysis';
+import PeerComparison from '@/components/dashboard/PeerComparison';
+import FinancialSimulator from '@/components/dashboard/FinancialSimulator';
+import GoalsHistory from '@/components/dashboard/GoalsHistory';
+import SalaryDispersionImpact from '@/components/dashboard/SalaryDispersionImpact';
+import DebtAvoidanceCalculator from '@/components/dashboard/DebtAvoidanceCalculator';
+import DispersionGamification from '@/components/dashboard/DispersionGamification';
+import DebtRiskAlerts from '@/components/dashboard/DebtRiskAlerts';
+import { ExpenseForm } from '@/components/dashboard/ExpenseForm';
+import { FWIEducationModal } from '@/components/dashboard/FWIEducationModal';
+import { ReceiptOCRScanner } from '@/components/dashboard/ReceiptOCRScanner';
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
+  const [refreshTransactions, setRefreshTransactions] = useState(0);
   const [expenseInput, setExpenseInput] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
@@ -243,7 +263,9 @@ export default function EmployeeDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm flex items-center gap-1">
-                  FWI Score
+                  <MetricTooltip tooltip={employeeTooltips.fwiScore}>
+                    <span>FWI Score</span>
+                  </MetricTooltip>
                   <EducationGamification
                     data-tour="education"
                     tutorialType="fwi"
@@ -252,9 +274,19 @@ export default function EmployeeDashboard() {
                   />
                   {usingCache && <OfflineDataBadge size="sm" />}
                 </p>
-                <div className="flex items-baseline space-x-2">
+                <div className="flex items-baseline space-x-2 mb-4">
                   <span className="text-5xl font-bold">{fwiScore}</span>
                   <span className="text-xl text-emerald-100">/100</span>
+                </div>
+                <div className="mb-4">
+                  <ContextualTooltip
+                    label="Estado Financiero"
+                    value={fwiScore >= 75 ? 'Excelente' : fwiScore >= 50 ? 'Alerta' : 'Crítico'}
+                    status={fwiScore >= 75 ? 'good' : fwiScore >= 50 ? 'warning' : 'critical'}
+                    tooltip="Tu salud financiera basada en gastos, ahorros y deuda"
+                    contextualAction={fwiScore >= 75 ? 'Mantén tus hábitos de ahorro' : 'Reduce gastos hormiga e incrementa ahorros'}
+                    trend={fwiScore > 50 ? 'up' : 'down'}
+                  />
                 </div>
                 <p className="text-sm text-gray-400 mt-2">
                   Nivel {fwiLevel} • {streakDays} días de racha
@@ -317,16 +349,49 @@ export default function EmployeeDashboard() {
         </div>
 
         <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-md bg-treevu-surface/50 border border-white/10">
+          <TabsList className="grid grid-cols-11 w-full bg-treevu-surface/50 border border-white/10 overflow-x-auto">
             <TabsTrigger value="transactions">Gastos</TabsTrigger>
+            <TabsTrigger value="ocr">Escanear</TabsTrigger>
             <TabsTrigger value="goals">Metas</TabsTrigger>
+            <TabsTrigger value="history">Historial</TabsTrigger>
             <TabsTrigger value="points">TreePoints</TabsTrigger>
+            <TabsTrigger value="peers">Comparativa</TabsTrigger>
+            <TabsTrigger value="simulator">Simulador</TabsTrigger>
             <TabsTrigger value="chat">Treevü Brain</TabsTrigger>
+            <TabsTrigger value="dispersion">Dispersión & Ahorro</TabsTrigger>
+            <TabsTrigger value="calculator">Calculadora</TabsTrigger>
+            <TabsTrigger value="gamification">Logros</TabsTrigger>
+            <TabsTrigger value="alerts">Alertas</TabsTrigger>
           </TabsList>
+
+          {/* OCR Scanner Tab */}
+          <TabsContent value="ocr" className="space-y-4">
+            <ReceiptOCRScanner />
+          </TabsContent>
 
           {/* Transactions Tab */}
           <TabsContent value="transactions" className="space-y-4">
-            {/* Quick Add Expense */}
+            {/* Expense Pattern Analysis */}
+            <ExpensePatternAnalysis
+              currentMonthly={transactions?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0}
+              averageMonthly={2500}
+              budgetLimit={3000}
+              isLoading={txLoading}
+            />
+
+            {/* Ant Expense Detector */}
+            <AntExpenseDetector
+              antExpenses={[
+                { name: "Café diario", dailyCost: 8, icon: "☕", color: "#f97316" },
+                { name: "Delivery", dailyCost: 25, icon: "🛵", color: "#ef4444" },
+                { name: "Suscripciones", dailyCost: 5, icon: "📱", color: "#8b5cf6" },
+              ]}
+              onCreateGoal={(name, target) => {
+                setPendingGoal({ name, target, deadline: "2025-12-31" });
+              }}
+            />
+
+            {/* Quick Add Expense - Using New ExpenseForm Component */}
             <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center text-white">
@@ -334,10 +399,11 @@ export default function EmployeeDashboard() {
                   Registrar Gasto
                 </CardTitle>
                 <CardDescription className="text-gray-400">
-                  Describe tu gasto y Treevü Brain lo clasificará automáticamente
+                  Registra tus gastos de forma rápida y fácil
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Opción 1: Formulario rápido con descripción */}
                 <div className="flex space-x-2">
                   <Input
                     placeholder="Ej: Café en Starbucks $5.50"
@@ -350,6 +416,7 @@ export default function EmployeeDashboard() {
                       if (!expenseInput.trim()) return;
                       await createTransaction.mutateAsync({ description: expenseInput });
                       setExpenseInput("");
+                      setRefreshTransactions(prev => prev + 1);
                     }}
                     disabled={!expenseInput.trim()}
                     successMessage="¡+10 pts!"
@@ -358,13 +425,22 @@ export default function EmployeeDashboard() {
                     <Plus className="h-4 w-4" />
                   </AnimatedButton>
                 </div>
+
+                {/* Opción 2: Formulario detallado */}
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-sm text-gray-400 mb-3">O usa el formulario detallado:</p>
+                  <ExpenseForm onSuccess={() => setRefreshTransactions(prev => prev + 1)} />
+                </div>
               </CardContent>
             </Card>
 
             {/* Recent Transactions */}
             <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
               <CardHeader>
-                <CardTitle className="text-lg text-white">Transacciones Recientes</CardTitle>
+                <CardTitle className="text-lg text-white flex items-center justify-between">
+                  <span>Transacciones Recientes</span>
+                  <FWIEducationModal currentScore={fwiData?.score || 50} />
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {txLoading ? (
@@ -456,6 +532,11 @@ export default function EmployeeDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Goals History Tab */}
+          <TabsContent value="history" className="space-y-4">
+            <GoalsHistory isLoading={false} />
+          </TabsContent>
+
           {/* TreePoints Tab */}
           <TabsContent value="points" className="space-y-4">
             <Card className="border-0 shadow-lg bg-gradient-to-r from-brand-primary/80 to-emerald-600 text-white">
@@ -495,6 +576,9 @@ export default function EmployeeDashboard() {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Points Redemption Section */}
+            <PointsRedemption currentPoints={displayTreePoints} />
 
             <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
               <CardHeader>
@@ -590,7 +674,49 @@ export default function EmployeeDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Peer Comparison Tab */}
+          <TabsContent value="peers" className="space-y-4">
+            <PeerComparison isLoading={false} />
+          </TabsContent>
+
+          {/* Financial Simulator Tab */}
+          <TabsContent value="simulator" className="space-y-4">
+            <FinancialSimulator currentFWI={fwiData?.score || 62} isLoading={false} />
+          </TabsContent>
+
+          {/* Salary Dispersion Impact Tab */}
+          <TabsContent value="dispersion" className="space-y-4">
+            <SalaryDispersionImpact isLoading={false} />
+          </TabsContent>
+
+          {/* Debt Avoidance Calculator Tab */}
+          <TabsContent value="calculator" className="space-y-4">
+            <DebtAvoidanceCalculator isLoading={false} />
+          </TabsContent>
+
+          {/* Dispersion Gamification Tab */}
+          <TabsContent value="gamification" className="space-y-4">
+            <DispersionGamification isLoading={false} />
+          </TabsContent>
+
+          {/* Debt Risk Alerts Tab */}
+          <TabsContent value="alerts" className="space-y-4">
+            <DebtRiskAlerts isLoading={false} />
+          </TabsContent>
         </Tabs>
+
+        {/* Ecosystem Reinforcements Section */}
+        <div className="mt-12 space-y-8">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6">Ecosystem Reinforcements</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <RewardsTierDisplay />
+              <EWARateCard />
+              <PersonalizedRecommendationsCarousel />
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Footer with Sync Status */}

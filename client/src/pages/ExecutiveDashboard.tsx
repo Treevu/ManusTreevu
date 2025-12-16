@@ -13,6 +13,13 @@ import { Link } from "wouter";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ImpactExplainerModal } from '@/components/ImpactExplainerModal';
 import { Info } from 'lucide-react';
+import AlertCenter from '@/components/dashboard/AlertCenter';
+import ExecutiveScorecard from '@/components/dashboard/ExecutiveScorecard';
+import InterventionROI from '@/components/dashboard/InterventionROI';
+import ExportData from '@/components/dashboard/ExportData';
+import HistoricalComparison from '@/components/dashboard/HistoricalComparison';
+import ComparisonDashboard from '@/components/dashboard/ComparisonDashboard';
+import ProgramROIAnalysis from '@/components/dashboard/ProgramROIAnalysis';
 
 // Mock trend data - in production this would come from the API
 const generateTrendData = (baseValue: number, variance: number, days: number) => {
@@ -287,6 +294,36 @@ export default function ExecutiveDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 relative">
+        {/* Executive Scorecard */}
+        <div className="mb-8">
+          <ExecutiveScorecard isLoading={metricsLoading} />
+        </div>
+
+        {/* Alert Center */}
+        <div className="mb-8">
+          <AlertCenter isLoading={metricsLoading} />
+        </div>
+
+        {/* Intervention ROI Analysis */}
+        <div className="mb-8">
+          <InterventionROI isLoading={metricsLoading} />
+        </div>
+
+        {/* Export Data */}
+        <div className="mb-8">
+          <ExportData dashboardType="executive" isLoading={metricsLoading} />
+        </div>
+
+        {/* Historical Comparison */}
+        <div className="mb-8">
+          <HistoricalComparison isLoading={metricsLoading} />
+        </div>
+
+        {/* Comparison Dashboard */}
+        <div className="mb-8">
+          <ComparisonDashboard isLoading={metricsLoading} />
+        </div>
+
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard

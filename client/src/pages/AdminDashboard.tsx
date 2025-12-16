@@ -36,6 +36,9 @@ import {
   BarChart2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AdminRewardTiersManager } from './AdminRewardTiersManager';
+import { AdminEWARatesManager } from './AdminEWARatesManager';
+import { AdminEngagementMetricsView } from './AdminEngagementMetricsView';
 import NotificationCenter from '@/components/NotificationCenter';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -850,6 +853,35 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Ecosystem Reinforcements Section */}
+        <div className="mt-12 space-y-8">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Coins className="w-6 h-6 text-brand-primary" />
+              Ecosystem Reinforcements
+            </h2>
+            <Tabs defaultValue="tiers" className="space-y-6">
+              <TabsList className="grid w-full max-w-md grid-cols-3 bg-treevu-surface/50 border border-white/10">
+                <TabsTrigger value="tiers">Reward Tiers</TabsTrigger>
+                <TabsTrigger value="rates">EWA Rates</TabsTrigger>
+                <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="tiers" className="space-y-6">
+                <AdminRewardTiersManager />
+              </TabsContent>
+
+              <TabsContent value="rates" className="space-y-6">
+                <AdminEWARatesManager />
+              </TabsContent>
+
+              <TabsContent value="metrics" className="space-y-6">
+                <AdminEngagementMetricsView />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </main>
     </div>
   );

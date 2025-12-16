@@ -6,6 +6,8 @@ import { Bug, TrendingUp, Target, AlertTriangle, Coffee, ShoppingBag, Smartphone
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatCurrency } from "@/lib/locale";
 import { toast } from "sonner";
+import { ChartHelpButton } from "@/components/ChartExplanationModal";
+import { employeeDashboardExplanations } from "@/lib/chartExplanations";
 
 interface AntExpense {
   name: string;
@@ -58,11 +60,14 @@ export function AntExpenseDetector({
         onClick={() => setShowModal(true)}
       >
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-amber-300 flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            Detector de Gasto Hormiga
-            <AlertTriangle className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-amber-300 flex items-center gap-2">
+              <Bug className="h-4 w-4" />
+              Detector de Gasto Hormiga
+              <AlertTriangle className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </CardTitle>
+            <ChartHelpButton explanation={employeeDashboardExplanations.antExpenseDetector} />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

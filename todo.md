@@ -1664,3 +1664,84 @@
 - [ ] Conectar formulario existente al endpoint
 - [ ] Agregar feedback visual (loading, success, error)
 - [ ] Enviar notificación al owner cuando llega un lead
+
+
+## Fase 30: Refuerzos del Ecosistema (6 Implementaciones)
+
+### ALTA PRIORIDAD (Sprint Actual)
+- [ ] Refuerzo 1: Gamification → Recompensas Reales
+  - [ ] Conectar puntos con descuentos en Marketplace (5% → 10% → 15%)
+  - [ ] Mostrar impacto en tasa de EWA
+  - [ ] Notificar a empresa sobre engagement
+  - [ ] Crear tabla de beneficios por nivel de puntos
+
+- [ ] Refuerzo 2: Alertas → Acciones Sugeridas
+  - [ ] Agregar acciones recomendadas a cada tipo de alerta
+  - [ ] Conectar con educación financiera
+  - [ ] Notificación contextual a empresa
+  - [ ] Crear mapeo de alertas → acciones
+
+- [ ] Refuerzo 3: EWA → Tasa Dinámica
+  - [ ] Mostrar tasa dinámica basada en FWI Score
+  - [ ] Mostrar incentivo de mejora de FWI
+  - [ ] Notificación a empresa sobre mejora
+  - [ ] Crear tabla de tasas por rango de FWI
+
+### IMPACTO MEDIO (Siguiente Sprint)
+- [ ] Refuerzo 4: OCR → Inteligencia Predictiva
+  - [ ] Mostrar impacto en FWI en tiempo real
+  - [ ] Recomendaciones de ahorro basadas en patrones
+  - [ ] Comparación con presupuesto del usuario
+  - [ ] Análisis de categorías de gasto
+
+- [ ] Refuerzo 5: Marketplace → Recomendaciones IA
+  - [ ] Recomendaciones personalizadas basadas en OCR
+  - [ ] Urgencia + Social proof
+  - [ ] Compra directa desde la app
+  - [ ] Tracking de conversión
+
+- [ ] Refuerzo 6: Risk Clustering → Intervención
+  - [ ] Recomendaciones de intervención automática
+  - [ ] Mostrar ROI esperado de intervención
+  - [ ] Automatización de educación por cohorte
+  - [ ] Dashboard de intervención para CHRO
+
+
+## Fase 49: Registro de Gastos, Gastos Hormiga y Explicación Mejorada del FWI
+
+### Formulario de Registro de Nuevo Gasto
+- [x] Crear componente ExpenseForm.tsx con:
+  - [x] Campos: monto, categoría, descripción, fecha
+  - [x] Validación de campos requeridos
+  - [x] Integración con tRPC transactions.create
+  - [x] Feedback visual con toast de éxito/error
+  - [x] Clasificación automática con IA (opcional)
+
+### Detección de Gastos Hormiga
+- [x] Crear componente AntExpenseDetector.tsx con:
+  - [x] Análisis de gastos recurrentes pequeños
+  - [x] Identificación de patrones (diarios, semanales, mensuales)
+  - [x] Cálculo de impacto acumulado
+  - [x] Recomendaciones de ahorro
+  - [x] Gráfico de gastos hormiga vs gastos grandes
+  - [x] Tabla de gastos hormiga detectados
+
+### Explicación Mejorada del FWI
+- [x] Crear componente FWIEducationModal.tsx con:
+  - [x] Explicación interactiva de qué es FWI
+  - [x] Desglose de los 5 factores del FWI
+  - [x] Visualización de cómo se calcula el score
+  - [x] Ejemplos de acciones para mejorar FWI
+  - [x] Comparación visual de rangos de FWI (crítico, bajo, medio, alto, excelente)
+  - [x] Botón "Entendí" para cerrar modal
+
+### Integración en EmployeeDashboard
+- [x] Agregar botón para abrir ExpenseForm
+- [x] Integrar AntExpenseDetector en tab de Gastos
+- [x] Agregar botón de información (?) para abrir FWIEducationModal en FWI Score
+- [x] Refrescar datos después de registrar nuevo gasto
+
+### Validación y Tests
+- [x] Validar que todos los componentes compilen sin errores
+- [x] Ejecutar tests (debe pasar los 257 tests existentes)
+- [x] Verificar que el build sea exitoso

@@ -923,3 +923,444 @@ export const streakHistory = mysqlTable("streak_history", {
 
 export type StreakHistory = typeof streakHistory.$inferSelect;
 export type InsertStreakHistory = typeof streakHistory.$inferInsert;
+
+
+/**
+ * REFUERZO 1: Reward Tiers - Descuentos progresivos por nivel de TreePoints
+ */
+export const rewardTiers = mysqlTable("reward_tiers", {
+  id: int("id").autoincrement().primaryKey(),
+  minPoints: int("minPoints").notNull(), // Mínimo de puntos para acceder
+  maxPoints: int("maxPoints"), // Máximo de puntos (null = sin límite)
+  discountPercentage: int("discountPercentage").notNull(), // 5, 10, 15, etc.
+  ewaRateReduction: int("ewaRateReduction").default(0).notNull(), // Reducción en tasa de EWA (en basis points, ej: 50 = 0.5%)
+  tierName: varchar("tierName", { length: 50 }).notNull(), // "Bronze", "Silver", "Gold", "Platinum"
+  tierColor: varchar("tierColor", { length: 20 }).notNull(), // Tailwind color
+  tierIcon: varchar("tierIcon", { length: 50 }).notNull(), // Lucide icon name
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RewardTier = typeof rewardTiers.$inferSelect;
+export type InsertRewardTier = typeof rewardTiers.$inferInsert;
+
+/**
+ * REFUERZO 2: Alert Suggested Actions - Acciones recomendadas para cada alerta
+ */
+export const alertSuggestedActions = mysqlTable("alert_suggested_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  alertType: varchar("alertType", { length: 50 }).notNull(), // 'low_fwi', 'high_spending', etc.
+  actionType: varchar("actionType", { length: 50 }).notNull(), // 'education', 'goal_creation', 'ewa_info', etc.
+  actionTitle: varchar("actionTitle", { length: 150 }).notNull(),
+  actionDescription: text("actionDescription"),
+  actionUrl: varchar("actionUrl", { length: 500 }), // Link to education content or feature
+  educationContentId: int("educationContentId"), // Link to education content
+  priority: int("priority").default(1).notNull(), // 1 = highest priority
+  estimatedImpact: varchar("estimatedImpact", { length: 100 }), // "FWI +5 points", "Save $50/month", etc.
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AlertSuggestedAction = typeof alertSuggestedActions.$inferSelect;
+export type InsertAlertSuggestedAction = typeof alertSuggestedActions.$inferInsert;
+
+/**
+ * REFUERZO 3: EWA Dynamic Rates - Tasas dinámicas basadas en FWI Score
+ */
+export const ewaDynamicRates = mysqlTable("ewa_dynamic_rates", {
+  id: int("id").autoincrement().primaryKey(),
+  minFwiScore: int("minFwiScore").notNull(), // Mínimo FWI Score
+  maxFwiScore: int("maxFwiScore").notNull(), // Máximo FWI Score
+  baseFeePercentage: decimal("baseFeePercentage", { precision: 5, scale: 2 }).notNull(), // 2.5%, 3%, etc.
+  feeDescription: varchar("feeDescription", { length: 200 }),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high", "critical"]).notNull(),
+  incentiveMessage: text("incentiveMessage"), // "Improve FWI to 75+ to reduce fee to 2%"
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EwaDynamicRate = typeof ewaDynamicRates.$inferSelect;
+export type InsertEwaDynamicRate = typeof ewaDynamicRates.$inferInsert;
+
+/**
+ * REFUERZO 4: Spending Insights - Análisis de gastos para recomendaciones
+ */
+export const spendingInsights = mysqlTable("spending_insights", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  month: int("month").notNull(), // 1-12
+  year: int("year").notNull(),
+  totalSpending: int("totalSpending").notNull(), // Total en centavos
+  budgetRecommended: int("budgetRecommended").notNull(), // Presupuesto recomendado
+  savingsOpportunity: int("savingsOpportunity").notNull(), // Potencial de ahorro
+  topCategory: varchar("topCategory", { length: 50 }),
+  topCategoryAmount: int("topCategoryAmount"),
+  anomalies: text("anomalies"), // JSON array de anomalías detectadas
+  predictions: text("predictions"), // JSON con predicciones de gasto
+  recommendedActions: text("recommendedActions"), // JSON array de acciones recomendadas
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SpendingInsight = typeof spendingInsights.$inferSelect;
+export type InsertSpendingInsight = typeof spendingInsights.$inferInsert;
+
+/**
+ * REFUERZO 5: Personalized Recommendations - Recomendaciones IA personalizadas
+ */
+export const personalizedRecommendations = mysqlTable("personalized_recommendations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  offerId: int("offerId").notNull(),
+  recommendationType: varchar("recommendationType", { length: 50 }).notNull(), // 'spending_pattern', 'fwi_improvement', 'goal_support', etc.
+  relevanceScore: int("relevanceScore").notNull(), // 0-100
+  urgency: mysqlEnum("urgency", ["low", "medium", "high"]).default("medium").notNull(),
+  estimatedSavings: int("estimatedSavings"), // Ahorro estimado
+  socialProof: text("socialProof"), // JSON con datos de otros usuarios
+  isViewed: boolean("isViewed").default(false).notNull(),
+  isConverted: boolean("isConverted").default(false).notNull(),
+  convertedAt: timestamp("convertedAt"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PersonalizedRecommendation = typeof personalizedRecommendations.$inferSelect;
+export type InsertPersonalizedRecommendation = typeof personalizedRecommendations.$inferInsert;
+
+/**
+ * REFUERZO 6: Risk Intervention Plans - Planes de intervención para empleados en riesgo
+ */
+export const riskInterventionPlans = mysqlTable("risk_intervention_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  riskCluster: varchar("riskCluster", { length: 100 }).notNull(), // 'high_spending', 'low_fwi', 'frequent_ewa', etc.
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
+  interventionType: mysqlEnum("interventionType", [
+    "education",        // Automated education program
+    "personalized_goal", // Create personalized savings goal
+    "merchant_offers",  // Targeted merchant offers
+    "ewa_counseling",   // EWA counseling
+    "manager_alert"     // Alert to manager
+  ]).notNull(),
+  interventionStatus: mysqlEnum("interventionStatus", ["pending", "active", "paused", "completed", "failed"]).default("pending").notNull(),
+  expectedOutcome: text("expectedOutcome"), // JSON con métricas esperadas
+  actualOutcome: text("actualOutcome"), // JSON con resultados reales
+  roiEstimated: int("roiEstimated"), // ROI estimado en centavos
+  roiActual: int("roiActual"), // ROI real en centavos
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RiskInterventionPlan = typeof riskInterventionPlans.$inferSelect;
+export type InsertRiskInterventionPlan = typeof riskInterventionPlans.$inferInsert;
+
+/**
+ * Ecosystem Engagement Metrics - Métricas de engagement por empresa
+ */
+export const ecosystemEngagementMetrics = mysqlTable("ecosystem_engagement_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  departmentId: int("departmentId").notNull(),
+  month: int("month").notNull(),
+  year: int("year").notNull(),
+  totalEmployees: int("totalEmployees").notNull(),
+  activeEmployees: int("activeEmployees").notNull(), // Usuarios activos en el mes
+  avgTreePointsPerEmployee: int("avgTreePointsPerEmployee").notNull(),
+  totalTreePointsRedeemed: int("totalTreePointsRedeemed").notNull(),
+  ewaRequestsCount: int("ewaRequestsCount").notNull(),
+  ewaApprovalRate: decimal("ewaApprovalRate", { precision: 5, scale: 2 }).notNull(),
+  avgFwiScoreImprovement: int("avgFwiScoreImprovement").notNull(), // En puntos
+  engagementScore: int("engagementScore").notNull(), // 0-100
+  interventionPlansStarted: int("interventionPlansStarted").notNull(),
+  interventionPlansCompleted: int("interventionPlansCompleted").notNull(),
+  estimatedROI: int("estimatedROI").notNull(), // En centavos
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EcosystemEngagementMetrics = typeof ecosystemEngagementMetrics.$inferSelect;
+export type InsertEcosystemEngagementMetrics = typeof ecosystemEngagementMetrics.$inferInsert;
+
+/**
+ * PHASE 1: Intervention Automation Engine
+ * Automated workflows triggered by churn risk levels
+ */
+export const interventionWorkflows = mysqlTable("intervention_workflows", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  churnProbability: decimal("churnProbability", { precision: 5, scale: 4 }).notNull(), // 0-1
+  riskLevel: mysqlEnum("riskLevel", ["critical", "high", "medium", "low", "minimal"]).notNull(),
+  segment: varchar("segment", { length: 50 }).notNull(), // financial_champions, rising_stars, etc.
+  interventionType: mysqlEnum("interventionType", [
+    "counseling",           // 1-on-1 financial counseling
+    "education",            // Automated education program
+    "personalized_offer",   // Special pricing offer
+    "manager_alert",        // Alert to manager
+    "ewa_support",          // EWA support and guidance
+    "goal_creation",        // Personalized goal creation
+    "engagement_boost"      // Engagement activities
+  ]).notNull(),
+  status: mysqlEnum("status", ["pending", "active", "paused", "completed", "failed"]).default("pending").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).notNull(),
+  successMetrics: text("successMetrics"), // JSON with target metrics
+  actualResults: text("actualResults"), // JSON with actual results
+  roiEstimated: int("roiEstimated"), // Estimated ROI in cents
+  roiActual: int("roiActual"), // Actual ROI in cents
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InterventionWorkflow = typeof interventionWorkflows.$inferSelect;
+export type InsertInterventionWorkflow = typeof interventionWorkflows.$inferInsert;
+
+/**
+ * Intervention Actions - Individual actions within a workflow
+ */
+export const interventionActions = mysqlTable("intervention_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  userId: int("userId").notNull(),
+  actionType: varchar("actionType", { length: 50 }).notNull(), // counseling_session, email_sent, offer_created, etc.
+  description: text("description"),
+  actionData: text("actionData"), // JSON with action-specific data
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "failed"]).default("pending").notNull(),
+  completedAt: timestamp("completedAt"),
+  result: text("result"), // JSON with action result
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type InterventionAction = typeof interventionActions.$inferSelect;
+export type InsertInterventionAction = typeof interventionActions.$inferInsert;
+
+/**
+ * Intervention Success Tracking
+ */
+export const interventionSuccessMetrics = mysqlTable("intervention_success_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  userId: int("userId").notNull(),
+  interventionType: varchar("interventionType", { length: 50 }).notNull(),
+  preInterventionFwi: int("preInterventionFwi"),
+  postInterventionFwi: int("postInterventionFwi"),
+  fwiImprovement: int("fwiImprovement"), // Puntos de mejora
+  churnRiskBefore: decimal("churnRiskBefore", { precision: 5, scale: 4 }),
+  churnRiskAfter: decimal("churnRiskAfter", { precision: 5, scale: 4 }),
+  churnRiskReduction: decimal("churnRiskReduction", { precision: 5, scale: 4 }), // Porcentaje de reducción
+  engagementIncrease: int("engagementIncrease"), // 0-100
+  estimatedSavings: int("estimatedSavings"), // En centavos
+  actualSavings: int("actualSavings"), // En centavos
+  successScore: int("successScore"), // 0-100
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type InterventionSuccessMetrics = typeof interventionSuccessMetrics.$inferSelect;
+export type InsertInterventionSuccessMetrics = typeof interventionSuccessMetrics.$inferInsert;
+
+/**
+ * PHASE 2: Mobile Push Notifications
+ * Configuration and delivery tracking for mobile push notifications
+ */
+export const mobilePushNotifications = mysqlTable("mobile_push_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  deviceToken: varchar("deviceToken", { length: 500 }).notNull(),
+  deviceType: mysqlEnum("deviceType", ["ios", "android", "web"]).notNull(),
+  appVersion: varchar("appVersion", { length: 20 }),
+  osVersion: varchar("osVersion", { length: 20 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MobilePushNotification = typeof mobilePushNotifications.$inferSelect;
+export type InsertMobilePushNotification = typeof mobilePushNotifications.$inferInsert;
+
+/**
+ * Push Notification Campaigns
+ */
+export const pushNotificationCampaigns = mysqlTable("push_notification_campaigns", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignName: varchar("campaignName", { length: 255 }).notNull(),
+  campaignType: mysqlEnum("campaignType", [
+    "churn_alert",          // Alertas de riesgo de churn
+    "intervention_offer",   // Ofertas de intervención
+    "engagement_boost",     // Actividades de engagement
+    "achievement",          // Logros desbloqueados
+    "goal_reminder",        // Recordatorios de metas
+    "ewa_available",        // EWA disponible
+    "educational",          // Contenido educativo
+    "promotional"           // Promocional
+  ]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  actionUrl: varchar("actionUrl", { length: 500 }),
+  targetSegment: varchar("targetSegment", { length: 100 }), // financial_champions, at_risk, etc.
+  targetRiskLevel: varchar("targetRiskLevel", { length: 50 }), // critical, high, medium, low
+  scheduledAt: timestamp("scheduledAt"),
+  sentAt: timestamp("sentAt"),
+  status: mysqlEnum("status", ["draft", "scheduled", "sent", "cancelled"]).default("draft").notNull(),
+  totalSent: int("totalSent").default(0),
+  totalOpened: int("totalOpened").default(0),
+  totalClicked: int("totalClicked").default(0),
+  openRate: decimal("openRate", { precision: 5, scale: 2 }).default('0'),
+  clickRate: decimal("clickRate", { precision: 5, scale: 2 }).default('0'),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PushNotificationCampaign = typeof pushNotificationCampaigns.$inferSelect;
+export type InsertPushNotificationCampaign = typeof pushNotificationCampaigns.$inferInsert;
+
+/**
+ * Push Notification Delivery Log
+ */
+export const pushNotificationDeliveryLog = mysqlTable("push_notification_delivery_log", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  deviceToken: varchar("deviceToken", { length: 500 }).notNull(),
+  status: mysqlEnum("status", ["pending", "sent", "delivered", "failed", "bounced"]).default("pending").notNull(),
+  deliveredAt: timestamp("deliveredAt"),
+  openedAt: timestamp("openedAt"),
+  clickedAt: timestamp("clickedAt"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PushNotificationDeliveryLog = typeof pushNotificationDeliveryLog.$inferSelect;
+export type InsertPushNotificationDeliveryLog = typeof pushNotificationDeliveryLog.$inferInsert;
+
+/**
+ * PHASE 3: Executive Reporting Dashboard
+ * Automated reports and executive metrics
+ */
+export const executiveReports = mysqlTable("executive_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  reportType: mysqlEnum("reportType", [
+    "monthly_summary",      // Resumen mensual
+    "churn_analysis",       // Análisis de churn
+    "intervention_roi",     // ROI de intervenciones
+    "segment_performance",  // Rendimiento por segmento
+    "pricing_effectiveness",// Efectividad de pricing
+    "engagement_trends",    // Tendencias de engagement
+    "risk_dashboard"        // Dashboard de riesgo
+  ]).notNull(),
+  reportPeriod: varchar("reportPeriod", { length: 50 }).notNull(), // 2024-01, 2024-Q1, etc.
+  departmentId: int("departmentId"), // NULL = global report
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  reportData: text("reportData"), // JSON with complete report data
+  summary: text("summary"), // Executive summary
+  keyMetrics: text("keyMetrics"), // JSON with key metrics
+  recommendations: text("recommendations"), // JSON array of recommendations
+  filePath: varchar("filePath", { length: 500 }), // Path to PDF/Excel file
+  generatedBy: int("generatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ExecutiveReport = typeof executiveReports.$inferSelect;
+export type InsertExecutiveReport = typeof executiveReports.$inferInsert;
+
+/**
+ * Executive Dashboard Metrics - Real-time metrics for executives
+ */
+export const executiveDashboardMetrics = mysqlTable("executive_dashboard_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  departmentId: int("departmentId"), // NULL = global
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  totalEmployees: int("totalEmployees").notNull(),
+  avgFwiScore: int("avgFwiScore").notNull(),
+  employeesAtRisk: int("employeesAtRisk").notNull(),
+  riskPercentage: decimal("riskPercentage", { precision: 5, scale: 2 }).notNull(),
+  churnRiskAverage: decimal("churnRiskAverage", { precision: 5, scale: 4 }).notNull(),
+  predictedChurnCount: int("predictedChurnCount").default(0),
+  activeInterventions: int("activeInterventions").default(0),
+  completedInterventions: int("completedInterventions").default(0),
+  interventionSuccessRate: decimal("interventionSuccessRate", { precision: 5, scale: 2 }).default('0'),
+  estimatedROI: int("estimatedROI").default(0), // En centavos
+  totalTreePointsIssued: int("totalTreePointsIssued").default(0),
+  totalTreePointsRedeemed: int("totalTreePointsRedeemed").default(0),
+  ewaRequestsCount: int("ewaRequestsCount").default(0),
+  ewaApprovalRate: decimal("ewaApprovalRate", { precision: 5, scale: 2 }).default('0'),
+  engagementScore: int("engagementScore").default(0), // 0-100
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExecutiveDashboardMetrics = typeof executiveDashboardMetrics.$inferSelect;
+export type InsertExecutiveDashboardMetrics = typeof executiveDashboardMetrics.$inferInsert;
+
+/**
+ * Report Subscriptions - Users who receive automated reports
+ */
+export const reportSubscriptions = mysqlTable("report_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  reportType: varchar("reportType", { length: 50 }).notNull(),
+  frequency: mysqlEnum("frequency", ["daily", "weekly", "monthly", "quarterly"]).notNull(),
+  deliveryMethod: mysqlEnum("deliveryMethod", ["email", "dashboard", "both"]).default("email").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastSentAt: timestamp("lastSentAt"),
+  nextSendAt: timestamp("nextSendAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReportSubscription = typeof reportSubscriptions.$inferSelect;
+export type InsertReportSubscription = typeof reportSubscriptions.$inferInsert;
+
+
+/**
+ * OAuth Accounts - Link multiple OAuth providers to a single user
+ */
+export const oauthAccounts = mysqlTable("oauth_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  provider: mysqlEnum("provider", ["google", "github", "microsoft", "manus"]).notNull(),
+  providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  name: varchar("name", { length: 255 }),
+  picture: text("picture"),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  expiresAt: timestamp("expiresAt"),
+  scope: text("scope"),
+  tokenType: varchar("tokenType", { length: 50 }),
+  idToken: text("idToken"),
+  sessionState: varchar("sessionState", { length: 255 }),
+  isLinked: boolean("isLinked").default(true).notNull(),
+  isPrimary: boolean("isPrimary").default(false).notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type OAuthAccount = typeof oauthAccounts.$inferSelect;
+export type InsertOAuthAccount = typeof oauthAccounts.$inferInsert;
+
+/**
+ * OAuth Sessions - Track OAuth login sessions
+ */
+export const oauthSessions = mysqlTable("oauth_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  provider: mysqlEnum("provider", ["google", "github", "microsoft", "manus"]).notNull(),
+  sessionToken: varchar("sessionToken", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  userAgent: text("userAgent"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type OAuthSession = typeof oauthSessions.$inferSelect;
+export type InsertOAuthSession = typeof oauthSessions.$inferInsert;

@@ -1,0 +1,1 @@
+-- Migration 00010 placeholder

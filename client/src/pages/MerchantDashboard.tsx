@@ -22,9 +22,18 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { CouponValidator } from "@/components/CouponValidator";
 import { toast } from "sonner";
+import MerchantOffersAnalysis from '@/components/dashboard/MerchantOffersAnalysis';
+import CustomerSegmentation from '@/components/dashboard/CustomerSegmentation';
+import DemandForecast from '@/components/dashboard/DemandForecast';
+import ExportData from '@/components/dashboard/ExportData';
+import MerchantCompetitiveAnalysis from '@/components/dashboard/MerchantCompetitiveAnalysis';
+import ProfitabilityAnalysis from '@/components/dashboard/ProfitabilityAnalysis';
+import { BuyerReadinessScoring } from '@/components/dashboard/BuyerReadinessScoring';
+import { PriceRecommendationEngine } from '@/components/dashboard/PriceRecommendationEngine';
+import { MetricTooltip, MetricValue, MetricBadge } from '@/components/MetricTooltip';
+import { merchantTooltips } from '@/lib/tooltipTexts';
 
 export default function MerchantDashboard() {
-  const { user } = useAuth();
   const [showMerchantEducation, setShowMerchantEducation] = useState(false);
   const [newOffer, setNewOffer] = useState<{
     title: string;
@@ -204,13 +213,39 @@ export default function MerchantDashboard() {
           />
         </div>
 
-        <Tabs defaultValue="offers" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg bg-treevu-surface/50 border border-white/10">
+        <Tabs defaultValue="readiness" className="space-y-6">
+          <TabsList className="grid grid-cols-4 w-full bg-treevu-surface/50 border border-white/10">
+            <TabsTrigger value="readiness">Buyer Readiness</TabsTrigger>
+            <TabsTrigger value="pricing">Precios</TabsTrigger>
+            <TabsTrigger value="analysis">Análisis</TabsTrigger>
             <TabsTrigger value="offers">Mis Ofertas</TabsTrigger>
             <TabsTrigger value="validate">Validar QR</TabsTrigger>
             <TabsTrigger value="create">Crear Oferta</TabsTrigger>
+            <TabsTrigger value="export">Exportar</TabsTrigger>
+            <TabsTrigger value="competitive">Competencia</TabsTrigger>
+            <TabsTrigger value="profitability">Rentabilidad</TabsTrigger>
             <TabsTrigger value="analytics">Analítica</TabsTrigger>
           </TabsList>
+
+          {/* Buyer Readiness Tab */}
+          <TabsContent value="readiness" className="space-y-4">
+            <BuyerReadinessScoring />
+          </TabsContent>
+
+          {/* Price Recommendation Tab */}
+          <TabsContent value="pricing" className="space-y-4">
+            <PriceRecommendationEngine />
+          </TabsContent>
+
+          {/* Analysis Tab */}
+          <TabsContent value="analysis" className="space-y-4">
+            <MerchantOffersAnalysis offers={offers} />
+          </TabsContent>
+
+          {/* Customer Segmentation Tab */}
+          <TabsContent value="segmentation" className="space-y-4">
+            <CustomerSegmentation />
+          </TabsContent>
 
           {/* Validate QR Tab */}
           <TabsContent value="validate" className="space-y-4">
@@ -488,6 +523,26 @@ export default function MerchantDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Demand Forecast Tab */}
+          <TabsContent value="forecast" className="space-y-4">
+            <DemandForecast isLoading={statsLoading} />
+          </TabsContent>
+
+          {/* Export Data Tab */}
+          <TabsContent value="export" className="space-y-4">
+            <ExportData dashboardType="merchant" isLoading={statsLoading} />
+          </TabsContent>
+
+          {/* Competitive Analysis Tab */}
+          <TabsContent value="competitive" className="space-y-4">
+            <MerchantCompetitiveAnalysis isLoading={statsLoading} />
+          </TabsContent>
+
+          {/* Profitability Analysis Tab */}
+          <TabsContent value="profitability" className="space-y-4">
+            <ProfitabilityAnalysis isLoading={statsLoading} />
           </TabsContent>
         </Tabs>
       </main>

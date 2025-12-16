@@ -26,6 +26,31 @@ import { useOffline } from "@/hooks/useOffline";
 import { OfflineDataBadge } from "@/components/ui/offline-data-badge";
 import { cacheSet, cacheGet } from "@/lib/offlineCache";
 import { LastSyncIndicator } from "@/components/LastSyncIndicator";
+import MonthlyTrendsChart from '@/components/dashboard/MonthlyTrendsChart';
+import AreaFilter from '@/components/dashboard/AreaFilter';
+import RiskMatrix from '@/components/dashboard/RiskMatrix';
+import InterventionROI from '@/components/dashboard/InterventionROI';
+import ChurnPrediction from '@/components/dashboard/ChurnPrediction';
+import CorrelationAnalysis from '@/components/dashboard/CorrelationAnalysis';
+import CompetitiveAnalysis from '@/components/dashboard/CompetitiveAnalysis';
+import InitiativeImpact from '@/components/dashboard/InitiativeImpact';
+import AdvancedTrendAnalysis from '@/components/dashboard/AdvancedTrendAnalysis';
+import RiskSegmentationAnalysis from '@/components/dashboard/RiskSegmentationAnalysis';
+import RiskMatrixAdvanced from '@/components/dashboard/RiskMatrixAdvanced';
+import InterventionOptimization from '@/components/dashboard/InterventionOptimization';
+import ChurnFactorAnalysis from '@/components/dashboard/ChurnFactorAnalysis';
+import CorrelationAdvanced from '@/components/dashboard/CorrelationAdvanced';
+import CompetitiveIntelligence from '@/components/dashboard/CompetitiveIntelligence';
+import InitiativePortfolio from '@/components/dashboard/InitiativePortfolio';
+import DepartmentAnalytics from '@/components/dashboard/DepartmentAnalytics';
+import ScenarioPlanner from '@/components/dashboard/ScenarioPlanner';
+import RetentionDashboard from '@/components/dashboard/RetentionDashboard';
+import DebtImpactAnalysis from '@/components/dashboard/DebtImpactAnalysis';
+import TalentRetentionROI from '@/components/dashboard/TalentRetentionROI';
+import SalaryDispersionImpact from '@/components/dashboard/SalaryDispersionImpact';
+import BehaviorChangeMetrics from '@/components/dashboard/BehaviorChangeMetrics';
+import { PendingEWATable } from '@/components/dashboard/PendingEWATable';
+import { ApprovedEWAHistory } from '@/components/dashboard/ApprovedEWAHistory';
 
 export default function B2BDashboard() {
   const { user } = useAuth();
@@ -38,6 +63,7 @@ export default function B2BDashboard() {
   }>({});
   const [usingCache, setUsingCache] = useState(false);
   const [showB2BEducation, setShowB2BEducation] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<number | null>(null);
 
   // Queries
   const { data: metrics, isLoading: metricsLoading } = trpc.b2b.getMetrics.useQuery();
@@ -175,6 +201,17 @@ export default function B2BDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 relative">
+        {/* Area Filter */}
+        {departments && departments.length > 0 && (
+          <div className="mb-6 p-4 bg-treevu-surface/50 border border-white/10 rounded-lg">
+            <AreaFilter
+              departments={departments}
+              selectedArea={selectedArea}
+              onAreaChange={setSelectedArea}
+              isLoading={metricsLoading}
+            />
+          </div>
+        )}
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
@@ -255,13 +292,28 @@ export default function B2BDashboard() {
           <FWITrendWidget className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10" />
         </div>
 
-        <Tabs defaultValue="risk" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg bg-treevu-surface/50 border border-white/10">
+        <Tabs defaultValue="trends" className="space-y-6">
+          <TabsList className="grid grid-cols-7 w-full bg-treevu-surface/50 border border-white/10">
+            <TabsTrigger value="trends">Tendencias</TabsTrigger>
             <TabsTrigger value="risk">Riesgo</TabsTrigger>
-            <TabsTrigger value="departments">Departamentos</TabsTrigger>
-            <TabsTrigger value="ewa">EWA</TabsTrigger>
-            <TabsTrigger value="points">TreePoints</TabsTrigger>
+            <TabsTrigger value="matrix">Matriz</TabsTrigger>
+            <TabsTrigger value="intervention">Intervenciones</TabsTrigger>
+            <TabsTrigger value="churn">Rotación</TabsTrigger>
+            <TabsTrigger value="correlation">Correlación</TabsTrigger>
+            <TabsTrigger value="competitive">Competencia</TabsTrigger>
+            <TabsTrigger value="initiatives">Iniciativas</TabsTrigger>
+            <TabsTrigger value="ewa">EWA Pendientes</TabsTrigger>
+            <TabsTrigger value="ewa-history">EWA Historial</TabsTrigger>
+            <TabsTrigger value="retention">Retención</TabsTrigger>
+            <TabsTrigger value="debt">Deuda & Impacto</TabsTrigger>
+            <TabsTrigger value="roi">ROI Retención</TabsTrigger>
+            <TabsTrigger value="dispersion">Dispersión & Ahorro</TabsTrigger>
           </TabsList>
+
+          {/* Trends Tab */}
+          <TabsContent value="trends" className="space-y-4">
+            <MonthlyTrendsChart />
+          </TabsContent>
 
           {/* Risk Analysis Tab */}
           <TabsContent value="risk" className="space-y-4">
@@ -278,7 +330,10 @@ export default function B2BDashboard() {
               <CardContent>
                 {riskAnalysis && riskAnalysis.length > 0 ? (
                   <div className="space-y-4">
-                    {riskAnalysis.slice(0, 10).map((employee) => (
+                    {riskAnalysis
+                      .filter(emp => !selectedArea || emp.departmentId === selectedArea)
+                      .slice(0, 10)
+                      .map((employee) => (
                       <div key={employee.id} className="p-4 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
                         <div className="flex items-center justify-between mb-2">
                           <div>
@@ -362,7 +417,9 @@ export default function B2BDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {metrics.riskSummary.map((dept, i) => (
+                        {metrics.riskSummary
+                          .filter(dept => !selectedArea || dept.departmentId === selectedArea)
+                          .map((dept, i) => (
                           <tr key={i} className="border-b border-white/5 last:border-0">
                             <td className="py-3 font-medium text-white">Depto #{dept.departmentId}</td>
                             <td className="py-3 text-center text-gray-300">{dept.employeeCount}</td>
@@ -443,73 +500,42 @@ export default function B2BDashboard() {
 
           {/* EWA Pending Tab */}
           <TabsContent value="ewa" className="space-y-4">
-            <Card className="border-0 shadow-lg bg-treevu-surface/80 backdrop-blur-sm border border-white/10">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center text-white">
-                  <DollarSign className="h-5 w-5 mr-2 text-brand-primary" />
-                  Solicitudes EWA Pendientes
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Aprueba o rechaza solicitudes de adelanto de salario
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pendingEwa && pendingEwa.length > 0 ? (
-                  <div className="space-y-4">
-                    {pendingEwa.map((request) => (
-                      <div key={request.id} className="p-4 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <p className="font-medium text-white">Empleado #{request.userId}</p>
-                            <p className="text-sm text-gray-400">
-                              FWI al solicitar: {request.fwiScoreAtRequest}/100
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-brand-primary">
-                              ${(request.amount / 100).toFixed(2)}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Fee: ${(request.fee / 100).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 mb-3 text-sm">
-                          <div>
-                            <p className="text-gray-400">Días trabajados</p>
-                            <p className="font-semibold text-white">{request.daysWorked}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Ingreso mensual</p>
-                            <p className="font-semibold text-white">${(request.monthlyIncome / 100).toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Solicitado</p>
-                            <p className="font-semibold text-white">
-                              {new Date(request.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button className="flex-1 bg-brand-primary hover:bg-brand-primary/90">
-                            Aprobar
-                          </Button>
-                          <Button variant="outline" className="flex-1 text-red-400 border-red-400/30 hover:bg-red-500/10">
-                            Rechazar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <DollarSign className="h-12 w-12 mx-auto mb-2 text-gray-600" />
-                    <p className="text-gray-400">¡Todo al día! No hay solicitudes pendientes</p>
-                    <p className="text-sm text-gray-500 mt-1">Las nuevas solicitudes de adelanto aparecerán aquí</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <PendingEWATable requests={pendingEwa || []} isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* EWA History Tab */}
+          <TabsContent value="ewa-history" className="space-y-4">
+            <ApprovedEWAHistory requests={pendingEwa?.filter((r: any) => r.status === 'processing_transfer' || r.status === 'disbursed') || []} isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Risk Matrix Tab */}
+          <TabsContent value="matrix" className="space-y-4">
+            <RiskMatrix selectedDepartment={selectedArea ? departments?.find((d: any) => d.id === selectedArea)?.name : undefined} isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Intervention ROI Tab */}
+          <TabsContent value="intervention" className="space-y-4">
+            <InterventionROI isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Churn Prediction Tab */}
+          <TabsContent value="churn" className="space-y-4">
+            <ChurnPrediction isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Correlation Analysis Tab */}
+          <TabsContent value="correlation" className="space-y-4">
+            <CorrelationAnalysis isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Competitive Analysis Tab */}
+          <TabsContent value="competitive" className="space-y-4">
+            <CompetitiveAnalysis isLoading={metricsLoading} />
+          </TabsContent>
+
+          {/* Initiative Impact Tab */}
+          <TabsContent value="initiatives" className="space-y-4">
+            <InitiativeImpact isLoading={metricsLoading} />
           </TabsContent>
 
           {/* TreePoints Tab */}
@@ -547,6 +573,27 @@ export default function B2BDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Retention Tab */}
+          <TabsContent value="retention" className="space-y-4">
+            <RetentionDashboard />
+          </TabsContent>
+
+          {/* Debt Impact Tab */}
+          <TabsContent value="debt" className="space-y-4">
+            <DebtImpactAnalysis />
+          </TabsContent>
+
+          {/* Retention ROI Tab */}
+          <TabsContent value="roi" className="space-y-4">
+            <TalentRetentionROI />
+          </TabsContent>
+
+          {/* Salary Dispersion Impact Tab */}
+          <TabsContent value="dispersion" className="space-y-4">
+            <SalaryDispersionImpact isLoading={false} />
+            <BehaviorChangeMetrics isLoading={false} />
           </TabsContent>
         </Tabs>
       </main>

@@ -36,6 +36,7 @@ import {
 } from "./services/pushService";
 import * as triggers from "./services/notificationTriggers";
 import { sendEmail, processEmailQueue } from "./services/emailService";
+import { sendEwaApprovalNotification, sendEwaRejectionNotification } from "./services/ewaNotifications";
 import { generateMonthlyReportData, generateReportHTML, getAvailableReportMonths } from "./services/pdfService";
 import * as alertService from "./services/alertService";
 import { generateExecutiveReportPDF, getExecutiveReportData } from "./services/pdfReportService";
@@ -86,8 +87,46 @@ const employeeProcedure = protectedProcedure.use(({ ctx, next }) => {
 // ROUTERS
 // ============================================
 
+import { ecosystemReinforcementRouter } from "./ecosystemReinforcementRouter";
+import { webhookRouter } from "./webhookRouter";
+import { alertIntegrationRouter } from "./alertIntegrationRouter";
+import { webhookManagementRouter } from './webhookManagementRouter';
+import { websocketRouter } from './websocketRouter';
+import { segmentationRouter } from './segmentationRouter';
+import { fcmRouter } from './fcmRouter';
+import { segmentAnalyticsRouter } from './segmentAnalyticsRouter';
+import { churnPredictionRouter } from './churnPredictionRouter';
+import { hrPricingRouter } from './hrPricingRouter';
+import { cronJobsRouter } from "./cronJobsRouter";
+import { reportExportRouter } from "./reportExportRouter";
+import * as interventionService from "./services/interventionAutomationService";
+import * as mobilePushService from "./services/mobilePushService";
+import * as executiveReportService from "./services/executiveReportingService";
+import { mobileRouter } from "./mobileRouter";
+import { managerPortalRouter } from "./managerPortalRouter";
+import { thirdPartyIntegrationRouter } from "./thirdPartyIntegrationRouter";
+import { predictiveAnalyticsRouter } from "./predictiveAnalyticsRouter";
+import { complianceReportingRouter } from "./complianceReportingRouter";
+
 export const appRouter = router({
   system: systemRouter,
+  ecosystem: ecosystemReinforcementRouter,
+  webhooks: webhookRouter,
+  alertIntegration: alertIntegrationRouter,
+  webhookManagement: webhookManagementRouter,
+  websocket: websocketRouter,
+  segmentation: segmentationRouter,
+  fcm: fcmRouter,
+  segmentAnalytics: segmentAnalyticsRouter,
+  churnPrediction: churnPredictionRouter,
+  hrPricing: hrPricingRouter,
+  cronJobs: cronJobsRouter,
+  reports: reportExportRouter,
+  mobile: mobileRouter,
+  managerPortal: managerPortalRouter,
+  integrations: thirdPartyIntegrationRouter,
+  analytics: predictiveAnalyticsRouter,
+  compliance: complianceReportingRouter,
   
   // ============================================
   // CONTACT ROUTER (Public - Demo Requests)
@@ -422,9 +461,9 @@ Responder a: ${input.email}
     }),
   }),
 
-  // REPORTS ROUTER
+  // LEGACY REPORTS ROUTER
   // ============================================
-  reports: router({
+  legacyReports: router({
     // Get available months for reports
     getAvailableMonths: protectedProcedure.query(async ({ ctx }) => {
       return getAvailableReportMonths(ctx.user.id);
@@ -899,9 +938,9 @@ Responder a: ${input.email}
   }),
 
   // ============================================
-  // ANALYTICS ROUTER
+  // LEGACY ANALYTICS ROUTER
   // ============================================
-  analytics: router({
+  legacyAnalytics: router({
     getUserStats: protectedProcedure
       .input(z.object({ startDate: z.string().optional() }).optional())
       .query(async ({ ctx, input }) => {
@@ -2208,6 +2247,222 @@ Responder a: ${input.email}
           employees: existingUsers.length,
           transactions: txCount,
         };
+      }),
+  }),
+
+  // ============================================
+  // INTERVENTION AUTOMATION ROUTER
+  // ============================================
+  interventions: router({
+    create: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        churnProbability: z.number(),
+        riskLevel: z.enum(['critical', 'high', 'medium', 'low', 'minimal']),
+        segment: z.string(),
+        fwiScore: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return interventionService.createInterventionWorkflow(input);
+      }),
+
+    getActive: protectedProcedure
+      .query(async ({ ctx }) => {
+        return interventionService.getUserActiveWorkflows(ctx.user.id);
+      }),
+
+    getHighPriority: adminProcedure
+      .input(z.object({ limit: z.number().default(50) }).optional())
+      .query(async ({ input }) => {
+        return interventionService.getHighPriorityWorkflows(input?.limit || 50);
+      }),
+
+    recordSuccess: adminProcedure
+      .input(z.object({
+        workflowId: z.number(),
+        userId: z.number(),
+        interventionType: z.string(),
+        preInterventionFwi: z.number(),
+        postInterventionFwi: z.number(),
+        churnRiskBefore: z.number(),
+        churnRiskAfter: z.number(),
+        engagementIncrease: z.number(),
+        estimatedSavings: z.number(),
+        actualSavings: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await interventionService.recordSuccessMetrics(
+          input.workflowId,
+          input.userId,
+          input.interventionType,
+          input.preInterventionFwi,
+          input.postInterventionFwi,
+          input.churnRiskBefore,
+          input.churnRiskAfter,
+          input.engagementIncrease,
+          input.estimatedSavings,
+          input.actualSavings
+        );
+        return { success: true };
+      }),
+
+    getEffectiveness: adminProcedure
+      .input(z.object({ interventionType: z.string() }))
+      .query(async ({ input }) => {
+        return interventionService.getInterventionEffectiveness(input.interventionType);
+      }),
+  }),
+
+  // ============================================
+  // MOBILE PUSH NOTIFICATIONS ROUTER
+  // ============================================
+  pushNotifications: router({
+    registerDevice: protectedProcedure
+      .input(z.object({
+        deviceToken: z.string(),
+        deviceType: z.enum(['ios', 'android', 'web']),
+        appVersion: z.string().optional(),
+        osVersion: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await mobilePushService.registerDeviceToken({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    unregisterDevice: protectedProcedure
+      .input(z.object({ deviceToken: z.string() }))
+      .mutation(async ({ input }) => {
+        await mobilePushService.unregisterDeviceToken(input.deviceToken);
+        return { success: true };
+      }),
+
+    createCampaign: adminProcedure
+      .input(z.object({
+        campaignName: z.string(),
+        campaignType: z.string(),
+        title: z.string(),
+        body: z.string(),
+        imageUrl: z.string().optional(),
+        actionUrl: z.string().optional(),
+        targetSegment: z.string().optional(),
+        targetRiskLevel: z.string().optional(),
+        scheduledAt: z.date().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const campaignId = await mobilePushService.createPushCampaign(input, ctx.user.id);
+        return { campaignId, success: true };
+      }),
+
+    getCampaigns: adminProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        campaignType: z.string().optional(),
+        limit: z.number().default(50),
+      }).optional())
+      .query(async ({ input }) => {
+        return mobilePushService.getCampaigns(
+          input?.status,
+          input?.campaignType,
+          input?.limit || 50
+        );
+      }),
+
+    getAnalytics: adminProcedure
+      .input(z.object({ campaignId: z.number() }))
+      .query(async ({ input }) => {
+        return mobilePushService.getCampaignAnalytics(input.campaignId);
+      }),
+
+    recordOpen: protectedProcedure
+      .input(z.object({ campaignId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await mobilePushService.recordPushOpen(input.campaignId, ctx.user.id);
+        return { success: true };
+      }),
+
+    recordClick: protectedProcedure
+      .input(z.object({ campaignId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await mobilePushService.recordPushClick(input.campaignId, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================
+  // EXECUTIVE REPORTING ROUTER
+  // ============================================
+  executiveReports: router({
+    generateReport: adminProcedure
+      .input(z.object({
+        reportType: z.string(),
+        reportPeriod: z.string(),
+        departmentId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const reportId = await executiveReportService.generateExecutiveReport({
+          ...input,
+          generatedBy: ctx.user.id,
+        });
+        return { reportId, success: true };
+      }),
+
+    getReport: adminProcedure
+      .input(z.object({ reportId: z.number() }))
+      .query(async ({ input }) => {
+        return executiveReportService.getExecutiveReport(input.reportId);
+      }),
+
+    getByType: adminProcedure
+      .input(z.object({
+        reportType: z.string(),
+        limit: z.number().default(10),
+      }))
+      .query(async ({ input }) => {
+        return executiveReportService.getReportsByType(input.reportType, input.limit);
+      }),
+
+    getDashboardMetrics: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+        departmentId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return executiveReportService.getDashboardMetrics(
+          input.startDate,
+          input.endDate,
+          input.departmentId
+        );
+      }),
+
+    getLatestMetrics: adminProcedure
+      .input(z.object({ departmentId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return executiveReportService.getLatestDashboardMetrics(input?.departmentId);
+      }),
+
+    subscribeToReport: protectedProcedure
+      .input(z.object({
+        reportType: z.string(),
+        frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly']),
+        deliveryMethod: z.enum(['email', 'dashboard', 'both']).default('email'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await executiveReportService.subscribeToReport(
+          ctx.user.id,
+          input.reportType,
+          input.frequency,
+          input.deliveryMethod
+        );
+        return { success: true };
+      }),
+
+    getSubscriptions: protectedProcedure
+      .query(async ({ ctx }) => {
+        return executiveReportService.getUserSubscriptions(ctx.user.id);
       }),
   }),
 });
