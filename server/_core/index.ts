@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import compression from "compression";
+import cors from "cors";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -42,6 +43,19 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Trust proxy configuration for Railway (single proxy hop)
+  app.set("trust proxy", 1);
+
+  // CORS configuration for cross-domain cookies
+  app.use(cors({
+    origin: process.env.NODE_ENV === "production" 
+      ? [process.env.FRONTEND_URL, process.env.CLIENT_URL].filter((url): url is string => Boolean(url))
+      : true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
+  }));
 
   // Initialize WebSocket server
   const io = initializeWebSocket(server);
