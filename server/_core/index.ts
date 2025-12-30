@@ -104,7 +104,7 @@ async function startServer() {
   );
   
   // Serve OS monitoring React app
-  const osMonitoringPath = path.resolve(process.cwd(), "os-monitoring-build");
+  const osMonitoringPath = path.resolve(process.cwd(), "os-monitoring-dist");
   app.use("/os-monitoring", express.static(osMonitoringPath, {
     setHeaders: (res, path) => {
       if (path.endsWith('.js')) {
@@ -116,7 +116,11 @@ async function startServer() {
       }
     }
   }));
-  app.get("/os-monitoring/*", (req, res) => {
+  app.get("/os-monitoring/*", (req, res, next) => {
+    // Don't serve index.html for static assets
+    if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {
+      return next();
+    }
     res.sendFile(path.join(osMonitoringPath, "index.html"));
   });
   
