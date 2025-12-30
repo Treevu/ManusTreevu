@@ -105,7 +105,17 @@ async function startServer() {
   
   // Serve OS monitoring React app
   const osMonitoringPath = path.resolve(process.cwd(), "os-monitoring-build");
-  app.use("/os-monitoring", express.static(osMonitoringPath));
+  app.use("/os-monitoring", express.static(osMonitoringPath, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.mjs')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
+    }
+  }));
   app.get("/os-monitoring/*", (req, res) => {
     res.sendFile(path.join(osMonitoringPath, "index.html"));
   });
